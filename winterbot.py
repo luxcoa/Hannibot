@@ -158,20 +158,7 @@ async def on_message(message):
 
     if message.content == '민정아 부팅시간':
         await send_uptime_message(message)
-
-    elif message.content == '!tester':
-        if str(message.author.id) in SPECIFIC_USER_IDS:
-            try:
-                embed = discord.Embed(title="Early Access Server Invite Link", description=INVITE_LINK, color=discord.Color.green())
-                await message.author.send(embed=embed)
-                await message.channel.send(f'{message.author.mention}님, DM을 확인해주세요!', delete_after=10)
-            except discord.Forbidden:
-                await message.channel.send(f'{message.author.mention}님, DM을 보낼 수 없습니다. DM이 열려 있는지 확인해주세요.', delete_after=10)
-        else:
-            await message.channel.send(f'{message.author.mention}님은 테스터로 지정되어 있지 않습니다.', delete_after=10)
-
-        await message.delete(delay=10)  # 보낸 메시지를 10초 후에 삭제
-
+        
 async def send_uptime_message(message):
     channel = message.channel
     now = datetime.datetime.now()
