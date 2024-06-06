@@ -7,9 +7,8 @@ import asyncio
 
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
-INVITE_LINK = 'https://discord.gg/UfHSqhcj2j'
+
 start_time = datetime.datetime.now()
-SPECIFIC_USER_IDS = ['837570564536270848', '1234356435']
 
 # 에스파의 곡 목록
 aespa_songs = [
@@ -88,6 +87,7 @@ async def on_message(message):
         embed.add_field(name="민정아 토레타", value="윈터가 출연한 토레타의 CF의 링크를 보내드려요!", inline=False)
         embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
         embed.add_field(name="민정아 아마겟돈", value="아마겟돈 퍼포먼스 영상 링크를 보내드려요!", inline=False)
+        embed.add_field(name="민정아 부팅시간", value="윈터봇의 부팅시간을 표시해요!")
         await message.channel.send(embed=embed)
     elif message.content == '민정아 소개해': # 에스파 윈터 소개
         embed = discord.Embed(title="에스파 윈터 소개", description="윈터의 대한 소개에요!", color=0xff0000)
@@ -103,7 +103,7 @@ async def on_message(message):
         user_id = '837570564536270848'  # 여기에 유저의 ID를 넣어주세요
         user_mention = f'<@{user_id}>'
         embed = discord.Embed(title="윈터봇 개발자", description=f"저는 {user_mention}님이 개발하였어요!", color=0xfdfdfd)
-        embed.add_field(name="문의 및 제안", value="https://discord.gg/EwtQZDkwkj  [ 서포트 서버 ]", inline=False)
+        embed.add_field(name="문의 및 제안", value="[ 서포트 서버 ](https://discord.gg/EwtQZDkwkj)", inline=False)
         await message.channel.send(embed=embed)
     elif message.content == '민정아 최신곡':
         embed = discord.Embed(title="에스파 최신곡", description="에스파의 최신 곡 뮤비의 링크에요! (Performance Ver)", color=0xff0700)
@@ -155,11 +155,11 @@ async def on_message(message):
         else:
             embed = discord.Embed(description='아앗.. 메세지 관리 권한이 없으시네요!', color=0xff0000)
             await message.channel.send(embed=embed)
-
+            
     elif message.content == '!tester':
         if str(message.author.id) in SPECIFIC_USER_IDS:
             try:
-                embed = discord.Embed(title="Early Access Server Invite Link", description=INVITE_LINK, color=discord.Color.green())
+                embed = discord.Embed(title="Early Access Server Invite Link", description=f"[초대링크]({INVITE_LINK})", color=discord.Color.green())
                 await message.author.send(embed=embed)
                 await message.channel.send(f'{message.author.mention}님, DM을 확인해주세요!', delete_after=10)
             except discord.Forbidden:
