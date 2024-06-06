@@ -7,8 +7,9 @@ import asyncio
 
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
-
+INVITE_LINK = 'https://discord.gg/UfHSqhcj2j'
 start_time = datetime.datetime.now()
+SPECIFIC_USER_IDS = ['837570564536270848', '1234356435']
 
 # 에스파의 곡 목록
 aespa_songs = [
@@ -77,17 +78,16 @@ async def on_message(message):
     
     if message.content == '민정아': # 봇 명령어 도움말
         embed = discord.Embed(title="윈터봇에는 다양한 기능이 있어요!", description="윈터봇에 대한 여러 가지 명령어를 알려드릴게요!", color=0x00b9ff)
-        embed.add_field(name="민정아 소개해", value="저의 대한 소개를 해요!", inline=False)
+        embed.add_field(name="민정아 소개해", value="윈터에 대한 소개를 해요!", inline=False)
         embed.add_field(name="민정아 개발자", value="저를 만드신 개발자의 정보를 알려드려요!", inline=False)
         embed.add_field(name="민정아 최신곡", value="에스파의 최신곡 뮤비 링크를 보내요!", inline=False)
         embed.add_field(name="민정아 이전곡", value="최신곡의 바로 이전 곡의 뮤비 링크를 보내요!", inline=False)
-        embed.add_field(name="민정아 데뷔곡", value="저의 데뷔 곡 뮤비 링크를 보내요!", inline=False)
-        embed.add_field(name="민정아 데뷔일", value="저의 데뷔일을 알려드려요!", inline=False)
+        embed.add_field(name="민정아 데뷔곡", value="에스파의 데뷔 곡 뮤비 링크를 보내요!", inline=False)
+        embed.add_field(name="민정아 데뷔일", value="에스파의 데뷔일을 알려드려요!", inline=False)
         embed.add_field(name="민정아 사진", value="사진을 보내드려요!", inline=False)
         embed.add_field(name="민정아 토레타", value="윈터가 출연한 토레타의 CF의 링크를 보내드려요!", inline=False)
         embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
         embed.add_field(name="민정아 아마겟돈", value="아마겟돈 퍼포먼스 영상 링크를 보내드려요!", inline=False)
-        embed.add_field(name="민정아 부팅시간", value="윈터봇의 부팅시간을 표시해요!")
         await message.channel.send(embed=embed)
     elif message.content == '민정아 소개해': # 에스파 윈터 소개
         embed = discord.Embed(title="에스파 윈터 소개", description="윈터의 대한 소개에요!", color=0xff0000)
@@ -156,39 +156,17 @@ async def on_message(message):
             embed = discord.Embed(description='아앗.. 메세지 관리 권한이 없으시네요!', color=0xff0000)
             await message.channel.send(embed=embed)
 
-    if message.content == '민정아 부팅시간':
-        await send_uptime_message(message)
-        
-async def send_uptime_message(message):
-    channel = message.channel
-    now = datetime.datetime.now()
-    uptime = now - start_time
+    elif message.content == '!tester':
+        if str(message.author.id) in SPECIFIC_USER_IDS:
+            try:
+                embed = discord.Embed(title="Early Access Server Invite Link", description=INVITE_LINK, color=discord.Color.green())
+                await message.author.send(embed=embed)
+                await message.channel.send(f'{message.author.mention}님, DM을 확인해주세요!', delete_after=10)
+            except discord.Forbidden:
+                await message.channel.send(f'{message.author.mention}님, DM을 보낼 수 없습니다. DM이 열려 있는지 확인해주세요.', delete_after=10)
+        else:
+            await message.channel.send(f'{message.author.mention}님은 테스터로 지정되어 있지 않습니다.', delete_after=10)
 
-    # uptime을 일, 시간, 분, 초로 변환
-    days = uptime.days
-    hours, remainder = divmod(uptime.seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
+        await message.delete(delay=10)  # 보낸 메시지를 10초 후에 삭제
 
-    uptime_str = f"{days}일 {hours}시간 {minutes}분 {seconds}초"
-
-    embed = discord.Embed(title="봇 부팅 정보", description="봇 부팅 시간과 현재까지 작동 시간이에요!", color=0x00ff00)
-    embed.add_field(name="봇 부팅 시간", value=start_time.strftime("%Y-%m-%d %H:%M:%S"), inline=False)
-    embed.add_field(name="현재까지 작동 시간", value=uptime_str, inline=False)
-    msg = await channel.send(embed=embed)
-    
-    # 일정 간격으로 업데이트
-    while True:
-        await asyncio.sleep(1)  # 60초마다 업데이트
-        now = datetime.datetime.now()
-        uptime = now - start_time
-
-        # uptime을 다시 일, 시간, 분, 초로 변환
-        days = uptime.days
-        hours, remainder = divmod(uptime.seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
-
-        uptime_str = f"{days}일 {hours}시간 {minutes}분 {seconds}초"
-        embed.set_field_at(1, name="현재까지 작동 시간", value=uptime_str, inline=False)
-        await msg.edit(embed=embed)
-
-client.run('token')
+client.run('MTIzNTA4OTcwODk5MjY5NjM5MQ.GFk9br.80qaF1K1C_bwI3qojN1RkcXnN8CX5kkaRu3Htg')
