@@ -122,8 +122,7 @@ async def on_message(message):
         Image_url = f"https://i.ytimg.com/vi/{'0nPniUvUBfUc'}/mqdefault.jpg"
         embed.set_image(url=Image_url)
         await message.channel.send(embed=embed)
-        await message.channel.send(embed=embed)
-
+        
     elif message.content == '민정아 이전곡':
         embed = discord.Embed(title="드라마", description=" 아마겟돈 발매 전 나온 드라마의 뮤비에요!", color=0xff0000)
         embed.add_field(name="뮤비 링크", value="[이전곡](https://www.youtube.com/watch?v=3CvJKTChsl4)", inline=False)
