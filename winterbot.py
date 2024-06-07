@@ -157,7 +157,7 @@ async def on_message(message):
 
     elif message.content == '민정아 노래추천':
         song = random.choice(aespa_songs)
-        embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 **{song}** 이 노래 어떠세요?", color=0x0082ff)
+        embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 **{song}** 이 곡 어떠세요?", color=0x0082ff)
         await message.channel.send(embed=embed)
 
     elif message.content == '민정아 컴백일':
