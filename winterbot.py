@@ -4,7 +4,6 @@ from discord.ui import Select, View
 import random
 import datetime
 import re
-from PIL import Image
 
 intents = discord.Intents.all()
 client = discord.Client(intents=intents)
@@ -156,9 +155,9 @@ async def on_message(message):
         embed.set_image(url="https://cdn.discordapp.com/attachments/1101166187146137630/1244136042148139049/IMG_9773.png?ex=6663d57b&is=666283fb&hm=a973c90766edc160907c5d1e065a13e3a7e788c3e349ef44af2ebb00b42bf650&")  # 실제 이미지 URL을 넣으세요
         await message.channel.send(embed=embed)
 
-    elif message.content == '민정아 추천해줘':
+    elif message.content == '민정아 노래추천':
         song = random.choice(aespa_songs)
-        embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 '{song}' 이 곡을 추천해요!", color=0x0082ff)
+        embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 **{song}** 이 노래 어떠세요?", color=0x0082ff)
         await message.channel.send(embed=embed)
 
     elif message.content == '민정아 컴백일':
