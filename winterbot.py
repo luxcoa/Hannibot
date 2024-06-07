@@ -79,7 +79,6 @@ class CommandSelect(discord.ui.Select):
             embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
             embed.add_field(name="민정아 컴백일", value="에스파의 컴백일을 알려드려요!", inline=False)
             embed.add_field(name="민정아 청소해 (청소할 메세지)", value="지정한 갯수의 메세지를 청소해요! ( 봇 멈출수도 있음 ) ", inline=False)
-            embed.add_field(name="민정아 부팅시간", value="윈터봇의 부팅시간을 표시해요!", inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CommandView(discord.ui.View):
