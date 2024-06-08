@@ -75,7 +75,6 @@ class CommandSelect(discord.ui.Select):
         elif self.values[0] == "유틸리티":
             embed = discord.Embed(title="유틸리티 명령어", description="윈터봇의 다양한 유틸 명령어들입니다.", color=0x0082ff)
             embed.add_field(name="민정아 핑", value="윈터봇의 핑을 전송해요!")
-            embed.add_field(name="민정아 사진", value="사진을 보내드려요!", inline=False)
             embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
             embed.add_field(name="민정아 컴백일", value="에스파의 컴백일을 알려드려요!", inline=False)
             embed.add_field(name="민정아 청소해 (청소할 메세지)", value="지정한 갯수의 메세지를 청소해요! ( 봇 멈출수도 있음 ) ", inline=False)
@@ -148,11 +147,6 @@ async def on_message(message):
         embed.add_field(name="데뷔일", value="2020년 11월 17일에 디지털 싱글 앨범 Black Mamba로 데뷔했어요!", inline=False)
         await message.channel.send(embed=embed)
         
-    elif message.content == '민정아 사진':
-        embed = discord.Embed(title="윈터 사진", description="윈터의 인스타그램에 최근 올라온 사진입니다.", color=0xff0000)
-        embed.set_image(url="https://cdn.discordapp.com/attachments/1101166187146137630/1244136042148139049/IMG_9773.png?ex=6663d57b&is=666283fb&hm=a973c90766edc160907c5d1e065a13e3a7e788c3e349ef44af2ebb00b42bf650&")  # 실제 이미지 URL을 넣으세요
-        await message.channel.send(embed=embed)
-
     elif message.content == '민정아 노래추천':
         song = random.choice(aespa_songs)
         embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 **{song}** 이 곡 어떠세요?", color=0x0082ff)
