@@ -23,7 +23,7 @@ aespa_songs = [
 
 # 초대 링크와 특정 유저 ID를 여기에 입력합니다.
 INVITE_LINK = 'https://discord.gg/UfHSqhcj2j'
-SPECIFIC_USER_IDS = ['837570564536270848', '1221449577828188265']
+SPECIFIC_USER_IDS = ['837570564536270848', '3231313312']
 
 @client.event
 async def on_ready():
@@ -181,6 +181,18 @@ async def on_message(message):
                 await message.channel.send(f'{message.author.mention}님, DM을 보낼 수 없습니다. DM이 열려 있는지 확인해주세요.', delete_after=10)
         else:
             await message.channel.send(f'{message.author.mention}님은 테스터로 지정되어 있지 않습니다.', delete_after=10)
+
+        await message.delete(delay=10)  # 보낸 메시지를 10초 후에 삭제
+    elif message.content == '!dash':
+        if str(message.author.id) in SPECIFIC_USER_IDS:
+            try:
+                embed = discord.Embed(title="개발자 웹패널", description=f"[웹패널](http://wssdashboard.kro.kr/#)", color=discord.Color.green())
+                await message.author.send(embed=embed)
+                await message.channel.send(f'{message.author.mention}님, DM을 확인해주세요!', delete_after=10)
+            except discord.Forbidden:
+                await message.channel.send(f'{message.author.mention}님, DM을 보낼 수 없습니다. DM이 열려 있는지 확인해주세요.', delete_after=10)
+        else:
+            await message.channel.send(f'{message.author.mention}님은 개발자자로 지정되어 있지 않습니다.', delete_after=10)
 
         await message.delete(delay=10)  # 보낸 메시지를 10초 후에 삭제
     
