@@ -1,3 +1,4 @@
+
 import discord
 from discord.ext import commands, tasks
 from discord.ui import Select, View
@@ -5,9 +6,13 @@ import random
 import datetime
 import re
 
-intents = discord.Intents.all()
+intents = discord.Intents.default()
+intents.message_content = True # 사용자의 메세지를 읽고 처리하려면 필요
+intents.presences = True # 봇 상태 업데이트 때문에 필요
+intents.guild_messages = True # 청소 기능 때문에 필요
+intents.guilds = True # 상태에 서버 수 업데이트를 위해 필요
+intents.members = True # 개발자 ID 때문에 필요
 client = discord.Client(intents=intents)
-
 start_time = datetime.datetime.now()
 
 # 에스파의 곡 목록
@@ -77,7 +82,8 @@ class CommandSelect(discord.ui.Select):
             embed.add_field(name="민정아 핑", value="윈터봇의 핑을 전송해요!")
             embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
             embed.add_field(name="민정아 컴백일", value="에스파의 컴백일을 알려드려요!", inline=False)
-            embed.add_field(name="민정아 청소해 (청소할 메세지)", value="지정한 갯수의 메세지를 청소해요! ( 봇 멈출수도 있음 ) ", inline=False)
+            embed.add_field(name="민정아 청소해 (청소할 메세지)", value="지정한 갯수의 메세지를 청소해요! ( 봇 멈출수도 있음 )", inline=False)
+            embed.add_field(name="민정아 귀여워", value=">_<", inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CommandView(discord.ui.View):
@@ -116,7 +122,8 @@ async def on_message(message):
     elif message.content == '민정아 최신곡':
         embed = discord.Embed(title="에스파 최신곡", description="", color=0x030303)
         embed.add_field(name="", value="[최신곡](https://www.youtube.com/watch?v=0nPniUvUBfUc)", inline=False)
-        # 썸네일 가져오기
+       
+       # 썸네일 가져오기
         video_id = re.search(r'v=([^&]+)', embed.fields[0].value).group(1)
         Image_url = f"https://i.ytimg.com/vi/{'0nPniUvUBfUc'}/mqdefault.jpg"
         embed.set_image(url=Image_url)
@@ -211,5 +218,13 @@ async def on_message(message):
         latency = round(client.latency * 1000)  # 지연 시간을 밀리초로 변환하여 계산
         embed = discord.Embed(title="핑", description=f"핑: {latency}ms", color=0x0082ff)
         await message.channel.send(embed=embed)
-
-client.run('MTIzNTA4OTcwODk5MjY5NjM5MQ.GFk9br.80qaF1K1C_bwI3qojN1RkcXnN8CX5kkaRu3Htg')
+    elif message.content == '민정아 귀여워':
+      response_options = [
+        ">_<",
+        "🥱",
+        "👻"
+    ]
+    response = random.choice(response_options)
+    await message.channel.send(response)
+    
+client.run('MTIzNTA4OTcwODk5MjY5NjM5MQ.G0b3fB.VLtFNtqsu6Jif32wH2A4NArAcoH-bxtPsL_IGg')
