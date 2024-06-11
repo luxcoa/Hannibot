@@ -67,6 +67,7 @@ class CommandSelect(discord.ui.Select):
             embed.add_field(name="민정아 소개해", value="윈터에 대한 소개를 해요!", inline=False)
             embed.add_field(name="민정아 개발자", value="저를 만드신 개발자의 정보를 알려드려요!", inline=False)
             embed.add_field(name="민정아 데뷔일", value="에스파의 데뷔일을 알려드려요!", inline=False)
+            embed.add_field(name="민정아 에스파", value="에스파의 정보를 알려드려요!", inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         
         elif self.values[0] == "뮤비":
@@ -120,11 +121,11 @@ async def on_message(message):
         
     elif message.content == '민정아 최신곡':
         embed = discord.Embed(title="에스파 최신곡", description="", color=0x030303)
-        embed.add_field(name="", value="[최신곡](https://www.youtube.com/watch?v=0nPniUvUBfUc)", inline=False)
+        embed.add_field(name="", value="[최신곡](https://www.youtube.com/watch?v=0nPniUvUBfU)", inline=False)
        
        # 썸네일 가져오기
         video_id = re.search(r'v=([^&]+)', embed.fields[0].value).group(1)
-        Image_url = f"https://i.ytimg.com/vi/{'0nPniUvUBfUc'}/mqdefault.jpg"
+        Image_url = f"https://i.ytimg.com/vi/{'0nPniUvUBfU'}/mqdefault.jpg"
         embed.set_image(url=Image_url)
         await message.channel.send(embed=embed)
         
