@@ -83,7 +83,6 @@ class CommandSelect(discord.ui.Select):
             embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
             embed.add_field(name="민정아 컴백일", value="에스파의 컴백일을 알려드려요!", inline=False)
             embed.add_field(name="민정아 청소해 (청소할 메세지)", value="지정한 갯수의 메세지를 청소해요! ( 봇 멈출수도 있음 )", inline=False)
-            embed.add_field(name="민정아 귀여워", value=">_<", inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CommandView(discord.ui.View):
@@ -218,13 +217,5 @@ async def on_message(message):
         latency = round(client.latency * 1000)  # 지연 시간을 밀리초로 변환하여 계산
         embed = discord.Embed(title="핑", description=f"핑: {latency}ms", color=0x0082ff)
         await message.channel.send(embed=embed)
-    elif message.content == '민정아 귀여워':
-      response_options = [
-        ">_<",
-        "🥱",
-        "👻"
-    ]
-    response = random.choice(response_options)
-    await message.channel.send(response)
     
 client.run('MTIzNTA4OTcwODk5MjY5NjM5MQ.G0b3fB.VLtFNtqsu6Jif32wH2A4NArAcoH-bxtPsL_IGg')
