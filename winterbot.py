@@ -75,7 +75,6 @@ class CommandSelect(discord.ui.Select):
             embed.add_field(name="민정아 최신곡", value="에스파의 최신곡 뮤비 링크를 보내요!", inline=False)
             embed.add_field(name="민정아 이전곡", value="최신곡의 바로 이전 곡의 뮤비 링크를 보내요!", inline=False)
             embed.add_field(name="민정아 데뷔곡", value="에스파의 데뷔 곡 뮤비 링크를 보내요!", inline=False)
-            embed.add_field(name="민정아 아마겟돈", value="아마겟돈 퍼포먼스 영상 링크를 보내요!", inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
         elif self.values[0] == "유틸리티":
@@ -156,12 +155,12 @@ async def on_message(message):
         
     elif message.content == '민정아 노래추천':
         song = random.choice(aespa_songs)
-        embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 **{song}** 이 곡 어떠세요?", color=0x0082ff)
+        embed = discord.Embed(title="노래 추천", description=f"오늘은 **{song}** 이 곡 어떠세요?", color=0x0082ff)
         await message.channel.send(embed=embed)
 
     elif message.content == '민정아 컴백일':
         embed = discord.Embed(title="컴백일", description="에스파의 컴백일을 알려드릴게요!", color=0xffff00)
-        embed.add_field(name="컴백일", value="2023년 5월 8일에 컴백했어요!", inline=False)
+        embed.add_field(name="컴백일", value="에스파는 2024년 5월 27일에 첫번째 정규앨범 `Armageddon`으로 컴백했어요!", inline=False)
         await message.channel.send(embed=embed)
     
     elif message.content.startswith('민정아 청소해'):
