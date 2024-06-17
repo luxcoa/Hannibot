@@ -3,7 +3,7 @@ from discord.ext import commands, tasks
 from discord.ui import Select, View
 import random
 import datetime
-from babel.dates import format_datetime, format_timedelta
+from datetime import datetime, timedelta
 import time
 import re
 import os
