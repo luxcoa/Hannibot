@@ -1,10 +1,12 @@
-
 import discord
 from discord.ext import commands, tasks
 from discord.ui import Select, View
 import random
 import datetime
+from babel.dates import format_datetime, format_timedelta
+import time
 import re
+import os
 
 intents = discord.Intents.default()
 intents.message_content = True # 사용자의 메세지를 읽고 처리하려면 필요
@@ -14,6 +16,10 @@ intents.guilds = True # 상태에 서버 수 업데이트를 위해 필요
 intents.members = True # 개발자 ID 때문에 필요
 client = discord.Client(intents=intents)
 start_time = datetime.datetime.now()
+client = commands.AutoShardedBot(command_prefix='민정아', intents=intents)
+
+# 봇이 부팅한 시간 기록
+boot_time = datetime.datetime.now()
 
 # 에스파의 곡 목록
 aespa_songs = [
@@ -29,6 +35,12 @@ aespa_songs = [
 # 초대 링크와 특정 유저 ID를 여기에 입력합니다.
 INVITE_LINK = 'https://discord.gg/UfHSqhcj2j'
 SPECIFIC_USER_IDS = ['837570564536270848', '3231313312']
+
+# 봇 정보 설정
+BOT_NAME = "Winterbot"
+BOT_VERSION = "2.1"
+BOT_DESCRIPTION = "윈터봇은 디스코드에서 다양한 유틸리티 기능을 제공하는 봇이에요!"
+BOT_DEVELOPER = "u_.xul"
 
 @client.event
 async def on_ready():
@@ -65,9 +77,8 @@ class CommandSelect(discord.ui.Select):
         if self.values[0] == "정보":
             embed = discord.Embed(title="정보 명령어", description="윈터봇의 다양한 소개 명령어들입니다.", color=0x0082ff)
             embed.add_field(name="민정아 소개해", value="윈터에 대한 소개를 해요!", inline=False)
-            embed.add_field(name="민정아 개발자", value="저를 만드신 개발자의 정보를 알려드려요!", inline=False)
-            embed.add_field(name="민정아 데뷔일", value="에스파의 데뷔일을 알려드려요!", inline=False)
-            embed.add_field(name="민정아 에스파", value="에스파의 정보를 알려드려요!", inline=False)
+            embed.add_field(name="민정아 개발자", value="저를 만드신 개발자의 정보를 알려드려요!", inline=True)
+            embed.add_field(name="민정아 데뷔일", value="에스파의 데뷔일을 알려드려요!", inline=True)
             await interaction.response.send_message(embed=embed, ephemeral=True)
         
         elif self.values[0] == "뮤비":
@@ -75,14 +86,18 @@ class CommandSelect(discord.ui.Select):
             embed.add_field(name="민정아 최신곡", value="에스파의 최신곡 뮤비 링크를 보내요!", inline=False)
             embed.add_field(name="민정아 이전곡", value="최신곡의 바로 이전 곡의 뮤비 링크를 보내요!", inline=False)
             embed.add_field(name="민정아 데뷔곡", value="에스파의 데뷔 곡 뮤비 링크를 보내요!", inline=False)
+            embed.add_field(name="민정아 아마겟돈", value="아마겟돈 퍼포먼스 영상 링크를 보내요!", inline=False)
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
         elif self.values[0] == "유틸리티":
             embed = discord.Embed(title="유틸리티 명령어", description="윈터봇의 다양한 유틸 명령어들입니다.", color=0x0082ff)
             embed.add_field(name="민정아 핑", value="윈터봇의 핑을 전송해요!")
-            embed.add_field(name="민정아 노래추천", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
+            embed.add_field(name="민정아 추천해줘", value="에스파의 노래 중 하나의 곡을 추천해드려요!", inline=False)
             embed.add_field(name="민정아 컴백일", value="에스파의 컴백일을 알려드려요!", inline=False)
             embed.add_field(name="민정아 청소해 (청소할 메세지)", value="지정한 갯수의 메세지를 청소해요! ( 봇 멈출수도 있음 )", inline=False)
+            embed.add_field(name="민정아 귀여워", value=">_<", inline=False)
+            embed.add_field(name="민정아 서버정보", value="서버의 정보를 알려드려요")
+            embed.add_field(name="민정아 부팅시간", value="윈터봇의 부팅시간을 전송해요!")
             await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class CommandView(discord.ui.View):
@@ -100,15 +115,15 @@ async def on_message(message):
        view = CommandView()
        await message.channel.send(embed=embed, view=view)
 
-    elif message.content == '민정아 소개해':
+    elif message.content == '민정아 소개':
         embed = discord.Embed(title="에스파 윈터 소개", description="윈터의 대한 소개에요!", color=0x0082ff)
-        embed.add_field(name="활동명", value="윈터 (Winter)", inline=False)
-        embed.add_field(name="본명", value="김민정 (金旼炡, Kim Min-jeong)", inline=False)
-        embed.add_field(name="소속 그룹", value="에스파 (aespa)", inline=False)
-        embed.add_field(name="출생", value="2001년 1월 1일 (23세)", inline=False)
-        embed.add_field(name="본관", value="김해 김씨")
-        embed.add_field(name="신체", value="164cm, A형", inline=False)
-        embed.add_field(name="소속사", value="SM 엔터테인먼트", inline=False)
+        embed.add_field(name="활동명", value="윈터 (Winter)", inline=True)
+        embed.add_field(name="본명", value="김민정 (金旼炡, Kim Min-jeong)", inline=True)
+        embed.add_field(name="소속 그룹", value="에스파 (aespa)", inline=True)
+        embed.add_field(name="출생", value="2001년 1월 1일 (23세)", inline=True)
+        embed.add_field(name="본관", value="김해 김씨", inline=True)
+        embed.add_field(name="신체", value="164cm, A형", inline=True)
+        embed.add_field(name="소속사", value="SM 엔터테인먼트", inline=True)
         await message.channel.send(embed=embed)
         
     elif message.content == '민정아 개발자':
@@ -120,11 +135,11 @@ async def on_message(message):
         
     elif message.content == '민정아 최신곡':
         embed = discord.Embed(title="에스파 최신곡", description="", color=0x030303)
-        embed.add_field(name="", value="[최신곡](https://www.youtube.com/watch?v=0nPniUvUBfU)", inline=False)
+        embed.add_field(name="", value="[최신곡](https://www.youtube.com/watch?v=0nPniUvUBfUc)", inline=False)
        
        # 썸네일 가져오기
         video_id = re.search(r'v=([^&]+)', embed.fields[0].value).group(1)
-        Image_url = f"https://i.ytimg.com/vi/{'0nPniUvUBfU'}/mqdefault.jpg"
+        Image_url = f"https://i.ytimg.com/vi/{'0nPniUvUBfUc'}/mqdefault.jpg"
         embed.set_image(url=Image_url)
         await message.channel.send(embed=embed)
         
@@ -155,12 +170,12 @@ async def on_message(message):
         
     elif message.content == '민정아 노래추천':
         song = random.choice(aespa_songs)
-        embed = discord.Embed(title="노래 추천", description=f"오늘은 **{song}** 이 곡 어떠세요?", color=0x0082ff)
+        embed = discord.Embed(title="에스파 노래 추천", description=f"오늘은 **{song}** 이 곡 어떠세요?", color=0x0082ff)
         await message.channel.send(embed=embed)
 
     elif message.content == '민정아 컴백일':
         embed = discord.Embed(title="컴백일", description="에스파의 컴백일을 알려드릴게요!", color=0xffff00)
-        embed.add_field(name="컴백일", value="에스파는 2024년 5월 27일에 첫번째 정규앨범 `Armageddon`으로 컴백했어요!", inline=False)
+        embed.add_field(name="컴백일", value="2024년 5월 27일에 컴백했어요!", inline=False)
         await message.channel.send(embed=embed)
     
     elif message.content.startswith('민정아 청소해'):
@@ -198,7 +213,7 @@ async def on_message(message):
             except discord.Forbidden:
                 await message.channel.send(f'{message.author.mention}님, DM을 보낼 수 없습니다. DM이 열려 있는지 확인해주세요.', delete_after=10)
         else:
-            await message.channel.send(f'{message.author.mention}님은 개발자자로 지정되어 있지 않습니다.', delete_after=10)
+            await message.channel.send(f'{message.author.mention}님은 개발자로 지정되어 있지 않습니다.', delete_after=10)
 
         await message.delete(delay=10)  # 보낸 메시지를 10초 후에 삭제
     
@@ -217,5 +232,84 @@ async def on_message(message):
         latency = round(client.latency * 1000)  # 지연 시간을 밀리초로 변환하여 계산
         embed = discord.Embed(title="핑", description=f"핑: {latency}ms", color=0x0082ff)
         await message.channel.send(embed=embed)
+    elif message.content == '민정아 샤드':
+        shard_id = message.guild.shard_id
+        total_shards = client.shard_count
+
+        embed = discord.Embed(title="샤드 정보", color=0x0082ff)
+        embed.add_field(name="샤드 ID", value=f"{shard_id}", inline=True)
+        embed.add_field(name="총 샤드 수", value=f"{total_shards}", inline=True)
+
+        # 봇 객체 초기화 상태 확인
+        if client.user is not None:
+            # 봇의 아바타 URL이 없을 경우 기본 값으로 설정
+            icon_url = client.user.avatar.url if client.user.avatar else discord.Embed.Empty
+            embed.set_footer(text=f"{client.user.name}", icon_url=icon_url)
+        else:
+            embed.set_footer(text="Winterbot", icon_url="https://cdn.discordapp.com/attachments/1101166187146137630/1251163667324735618/GQCBuFQbEAYwjCE.png?ex=6670e037&is=666f8eb7&hm=2711df464b5825bd7a60525c190067fa5575fd10ca62d4523bc349104bf42874&")
+        await message.channel.send(embed=embed)
     
+    elif message.content == '민정아 부팅시간':
+        interaction: discord.Interaction
+        now = datetime.datetime.now()
+        delta = now - boot_time
+        boot_timestamp = int(time.mktime(boot_time.timetuple()))
+
+        # 시간 경과 계산
+        years, remainder = divmod(delta.days, 365)
+        months, remainder = divmod(remainder, 30)
+        days = remainder
+        hours, remainder = divmod(delta.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # 경과 시간 형식화
+        if years > 0:
+            elapsed_time = f"{years}년"
+        elif months > 0:
+            elapsed_time = f"{months}달"
+        elif days > 0:
+            elapsed_time = f"{days}일"
+        elif hours > 0:
+            elapsed_time = f"{hours}시간"
+        elif minutes > 0:
+            elapsed_time = f"{minutes}분"
+        else:
+            elapsed_time = f"{seconds}초"
+
+        response = (
+            f'봇이 부팅된 시간: <t:{boot_timestamp}>\n'
+            f'부팅 후 흐른 시간: `{elapsed_time}`'
+        )
+        await message.channel.send(response)
+    elif message.content == "민정아 서버정보":
+        guild = message.guild
+        boost_level = guild.premium_tier
+        boost_count = guild.premium_subscription_count
+        
+        if boost_level == 0:
+            boost_tier = "부스트 없음"
+        elif boost_level == 1:
+            boost_tier = "레벨 1"
+        elif boost_level == 2:
+            boost_tier = "레벨 2"
+        elif boost_level == 3:
+            boost_tier = "레벨 3"
+        else:
+            boost_tier = "알 수 없음"
+        
+        server_icon_url = guild.icon.url if guild.icon else discord.Embed.Empty
+        
+        embed = discord.Embed(title=f'{guild.name} 서버 정보', color=discord.Color.blue())
+        embed.set_thumbnail(url=server_icon_url)
+        embed.add_field(name='서버 이름', value=guild.name, inline=True)
+        embed.add_field(name='멤버 수', value=guild.member_count, inline=True)
+        embed.add_field(name='부스트 레벨', value=boost_tier, inline=True)
+        embed.add_field(name='부스트 횟수', value=boost_count, inline=True)
+        embed.add_field(name='역할', value=len(guild.roles), inline=True)
+        embed.add_field(name='텍스트 채널', value=len(guild.text_channels), inline=True)
+        embed.add_field(name='음성 채널', value=len(guild.voice_channels), inline=True)
+        embed.add_field(name='서버 ID', value=guild.id, inline=True)
+        
+        await message.channel.send(embed=embed)
+
 client.run('MTIzNTA4OTcwODk5MjY5NjM5MQ.G0b3fB.VLtFNtqsu6Jif32wH2A4NArAcoH-bxtPsL_IGg')
