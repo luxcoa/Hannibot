@@ -1,13 +1,3 @@
-# Winterbot
-
-이 레포지토리는 Seong Park의 원본 [Discord-Yena-Bot](https://github.com/seongpark/Discord-Yena-Bot)을 수정한 것입니다.
-
-## 변경 사항
-
-- 새로운 명령어 추가
-- 대체로 수정.
-- yena-bot -> winterbot (IZONE 예나의 대한 정보 봇 -> aespa 윈터의 대한 정보 봇으로 변경.) 
-
 ## 설치 방법
 
 1. 저장소를 클론하기:
