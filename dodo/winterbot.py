@@ -1,16 +1,16 @@
 import discord
 from discord.ext import commands, tasks
+from discord.ext.commands import CommandOnCooldown
 from discord.ui import Button, View
 import asyncio
 import random
-import re
 import os
-from datetime import datetime
-import time
-import re
-import os
+from datetime import datetime, timezone
+import traceback
 import json
+from discord.errors import NotFound, HTTPException
 import aiohttp
+import time
 
 intents = discord.Intents.default()
 intents.presences = True
@@ -20,34 +20,63 @@ intents.members = True
 
 
 # 샤드 수를 지정합니다.
-shard_count = 2 # 샤드 수를 원하는 만큼 설정합니다.
-bot = commands.AutoShardedBot(command_prefix=commands.when_mentioned_or("$"),  owner_ids=[837570564536270848], intents=intents, shard_count=shard_count)
+shard_count = 1 # 샤드 수를 원하는 만큼 설정합니다.
+bot = commands.AutoShardedBot(command_prefix=commands.when_mentioned_or("."),  owner_ids=[837570564536270848], intents=intents, shard_count=shard_count)
 timers = {}  # 각 서버별 타이머를 저장할 딕셔너리
+online_records = {}
 
 SERVER_DATA_FILE = 'server_data.json'
 BOT_SETTINGS_FILE = 'bot_settings.json'
 
-TOKEN = 'MTIzNTA4OTcwODk5MjY5NjM5MQ.G4HoxM.zCjIrt6A_1w9j0DBWGYPBrK2Ra22pnk1aXuGR8'
+TOKEN = 'TOKEN'
 
 # Load your token and authorization data from a secure place
 with open('config.json', 'r') as file:
     config = json.load(file)
 
+
 KOREANBOTS_AUTH = config['KOREANBOTS_AUTH']
 CHANNEL_ID = config['CHANNEL_ID']
+DEVELOPER_IDS = 837570564536270848
+WEBHOOK_URL = 'https://discord.com/api/webhooks/1270055501446512702/OopILVLeY052NlSTypBHpP6gcgynEVczjuDkwGC9a210pBvxhcyyqqf66ZAogtCUA2TK'
+
+# 로그 기록을 저장할 리스트
+join_logs = []
+
+# 입장 로그를 보낼 채널 ID와 알림 기능 활성화 설정
+settings = {
+    'notification_channel_id': None,
+    'notification_enabled': True
+}
 
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
-    await bot.process_commands(message)
 
+    await bot.process_commands(message)
+    
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.CommandInvokeError):
-        print(f'Error occurred: {error}')
-        await ctx.send(f'명령어 처리 중 오류가 발생했습니다: {error}')
-       
+    # 오류 메시지에 대한 조건 처리
+    if isinstance(error, commands.CommandNotFound):
+        user_message = "존재하지 않는 명령어인거 같아요..! / 업데이트로 인해 사라졌을 수도 있어요!"
+    elif isinstance(error, commands.MissingPermissions):
+        user_message = "이 명령어를 실행할 권한이 없으시네요..! / 권한이 있는지 확인하고 다시 시도해보세요!"
+    elif isinstance(error, commands.BotMissingPermissions):
+        user_message = "봇에게 이 명령어를 실행할 권한이 없어요! / 봇에게 권한을 지급해주세요!"
+    elif isinstance(error, commands.CommandOnCooldown):
+        user_message = f"명령어가 쿨다운중이에요! / {round(error.retry_after, 2)}초 후에 다시 시도해주세요!"
+    elif isinstance(error, commands.MissingRequiredArgument):
+        user_message = "옵션에 값이 없는거 같아요! / 다시 시도해주세요!"
+    elif isinstance(error, commands.NotOwner):
+        user_message = "해당 명령어는 개발자 전용 명령어에요!"
+    else:
+        user_message = "명령어 실행 중 알 수 없는 오류가 발생했네요.. / 오류가 지속된다면 `버그제보` 명령어로 버그를 제보해주세요!"
+
+    # 사용자에게 오류 메시지 전송
+    await ctx.respond(user_message, ephemeral=True)
+    
 bot_owner_id = 837570564536270848
 
 class Timer:
@@ -61,6 +90,15 @@ cooldowns = {}
 target_guild_ids = [1081161469195980831, 987654321098765432]  # 여기에는 자동으로 나가고 싶은 서버 ID를 넣으세요.
 warnings = {}
 
+# 쿨타임을 저장할 딕셔너리 (유저 ID를 키로 사용)
+cooldowns = {
+    '탈퇴': 86400  # 24시간 (초 단위)
+}
+
+# 마지막 사용 시간을 저장할 딕셔너리 (유저 ID와 명령어를 키로 사용)
+last_used = {}
+# 파일 경로 설정
+SETTINGS_FILE = 'settings.json'    
 start_time = datetime.now()
 
 boot_time = datetime.now()
@@ -87,15 +125,12 @@ async def on_guild_join(guild):
 cute_images = [
     "https://cdn.discordapp.com/attachments/977151085707923496/1253245883030437918/hannis.jpg?ex=667527ae&is=6673d62e&hm=d78d65207dafee930eb56248d75ad8908985aad82b2ebf8f726884e8c91dfb10&",
     "https://cdn.discordapp.com/attachments/977151085707923496/1253245882460016690/HANNI.jpg?ex=667527ae&is=6673d62e&hm=bc0fd5b360896659e8faf4bb49708011aa6a6696388e4631baccec4371a5c0bc&",
-    "https://cdn.discordapp.com/attachments/977151085707923496/1253245882724515870/lasthani.jpg?ex=667527ae&is=6673d62e&hm=5b31a9f230df3536dff1b642c18af0aaa7306e2f8282b4ae6997ca2be6e400e6&",
-    "https://cdn.discordapp.com/attachments/977151085707923496/1253381912441913445/hani.jpg?ex=6675a65e&is=667454de&hm=e71378b017681c97945e4c3f723437e4b23e03f86a7ffd47075a2dc43f651ba5&",
     "https://cdn.discordapp.com/attachments/977151085707923496/1253381912722935859/haniii.jpg?ex=6675a65e&is=667454de&hm=ad91a7bf0bb96e49fcc1f0a1221dfcde7fe0786cab737414c775e0c67834c474&",
     "https://cdn.discordapp.com/attachments/1101044991922556969/1256913091313274993/icon_26.gif?ex=6683d089&is=66827f09&hm=ba809e8928bb98301a96ccf5eb306c5a04ca5425fa0198c455db04d9db9b95fd&",
     "https://cdn.discordapp.com/attachments/1101044991922556969/1257015231914180779/icon_22.gif?ex=66842fa9&is=6682de29&hm=4fd9e672bf9c53ed33324b00d63451cd7b2e2b1adc6447f4f2e3dec7df90d406&",
     "https://cdn.discordapp.com/attachments/1101044991922556969/1257016993094041660/icon_18_1.gif?ex=6684314d&is=6682dfcd&hm=5c4d7362d24fe1aba2923e72948f58d2c3fee05b0a4249a21db552e5718bcc9c&",
     "https://cdn.discordapp.com/attachments/1254307776407142420/1256285872941174956/GIF.gif?ex=66842b64&is=6682d9e4&hm=1c5516bfb406655175d830a737d2309ce65d7f0052f7873df0a7b504afe7288a&",
 ]
-
 newjeans_songs = [
     "Attention", "Hype Boy", "Cookie", "Hurt", "Ditto", "OMG", "ASAP", "Cool With You", "New Jeans", "Super Shy", "ETA", 
     "Get Up", "Zero", "How Sweet", "Bubble Gum", "아름다운 구속", "우리의 밤은 당신의 낮보다 아름답다", "GODS", "Ditto 250 Remix", 
@@ -106,7 +141,7 @@ INVITE_LINK = 'https://discord.gg/UfHSqhcj2j'
 SPECIFIC_USER_IDS = ['837570564536270848', '3231313312']
 
 DEVELOPER_ID = '837570564536270848'
-BOT_VERSION = '1.9.2'
+BOT_VERSION = '2.0.0'
 
 # 도박 데이터 저장
 gambling_data = {} 
@@ -118,12 +153,20 @@ async def on_ready():
     print(f"봇 아이디: {bot.user.id}")
     print(f'샤드 ID: {bot.shard_id}')
     print(f'샤드 수: {bot.shard_count}')
-    update_koreanbots.start()
-    # Check if the task is already running
+
+    # update_koreanbots 작업 관리
+    if not update_koreanbots.is_running():
+        update_koreanbots.start()
+        print('update_koreanbots 작업이 시작되었습니다.')
+    else:
+        print('update_koreanbots 작업이 이미 실행 중입니다.')
+
+    # update_status 작업 관리
     if not update_status.is_running():
         update_status.start()
+        print('update_status 작업이 시작되었습니다.')
     else:
-        print('update_status task is already running')
+        print('update_status 작업이 이미 실행 중입니다.')
 
     # JSON 파일 초기화 (존재하지 않을 경우)
     if not os.path.exists(DATA_FILE):
@@ -139,12 +182,35 @@ async def update_status():
     
     status_messages = [
         discord.Game('Prefix: /'),
-        discord.Game(f'{server_count}개의 서버에서 일')
+        discord.Game(f'{server_count}개의 서버에서 활동')
     ]
     
     await bot.change_presence(activity=status_messages[status_index])
     status_index = (status_index + 1) % len(status_messages)
-    
+
+# 파일에서 설정을 로드하는 함수
+def load_settings():
+    if os.path.exists(SETTINGS_FILE):
+        try:
+            with open(SETTINGS_FILE, 'r') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            print("설정 파일이 올바르지 않아서 기본 설정으로 초기화합니다.")
+            return {
+                'notification_channel_id': None,
+                'notification_enabled': True
+            }
+    else:
+        return {
+            'notification_channel_id': None,
+            'notification_enabled': True
+        }
+
+# 파일에 설정을 저장하는 함수
+def save_settings(settings):
+    with open(SETTINGS_FILE, 'w') as f:
+        json.dump(settings, f, indent=4)
+
 # 서버 데이터 가져오기 함수
 def get_server_data(server_id):
     try:
@@ -153,6 +219,9 @@ def get_server_data(server_id):
         return server_data.get(str(server_id), {"users": {}})
     except FileNotFoundError:
         return {"users": {}}
+
+# 초기 설정 로드
+settings = load_settings()
 
 # 서버 데이터 업데이트 함수
 def update_server_data(server_id, user_id=None, user_data=None, settings=None):
@@ -177,14 +246,12 @@ def get_bot_settings():
         return {}
 
 def load_user_data():
-    # 파일이 존재하지 않으면 기본값으로 생성
     if not os.path.exists(DATA_FILE):
         data = {"users": {}}
         with open(DATA_FILE, 'w') as file:
             json.dump(data, file, indent=4)
         return data
 
-    # 파일이 존재하지만 내용이 없으면 기본값으로 설정
     with open(DATA_FILE, 'r') as file:
         try:
             data = json.load(file)
@@ -199,26 +266,91 @@ def save_user_data(data):
     with open(DATA_FILE, 'w') as file:
         json.dump(data, file, indent=4)
 
-# 도박 데이터 로드
-gambling_data = load_user_data()
+# 도박 데이터를 관리하는 딕셔너리
+gambling_data = {}
 
-# 도박 데이터를 서버별로 관리하기
+# 서버별 도박 데이터를 불러오거나 초기화하는 함수
 def get_guild_data(guild_id):
     if guild_id not in gambling_data:
         gambling_data[guild_id] = {"balances": {}}
     return gambling_data[guild_id]
+
+# 사용자의 잔액을 확인하거나 설정하는 함수
+def get_user_balance(guild_id, user_id):
+    guild_data = get_guild_data(guild_id)
+    if user_id not in guild_data["balances"]:
+        guild_data["balances"][user_id] = 0  # 초기 잔액 설정
+    return guild_data["balances"][user_id]
+
+def set_user_balance(guild_id, user_id, balance):
+    guild_data = get_guild_data(guild_id)
+    guild_data["balances"][user_id] = balance
   
-@bot.slash_command(description="뉴진스 하니의 대한 소개를 전송해요!")
-async def 소개 (ctx):
+@bot.slash_command(description="뉴진스 하니에 대한 소개를 전송해요!")
+async def 하니(ctx):
         embed = discord.Embed(title="뉴진스 하니 소개", description="하니의 대한 소개에요!", color=0x0082ff)
         embed.add_field(name="활동명", value="하니 (Hanni)", inline=True)
         embed.add_field(name="본명", value="Hanni Ngoc Pham (하니 응옥 팜)", inline=True)
         embed.add_field(name="소속 그룹", value="NewJeans", inline=True)
-        embed.add_field(name="출생", value="2004년 10월 6일 (19세)", inline=True)
+        embed.add_field(name="출생", value="2004년 10월 6일 (만 19세)", inline=True)
         embed.add_field(name="신체", value="162cm, O형", inline=True)
         embed.add_field(name="소속사", value="ADOR", inline=True)
+        embed.set_footer(text="출처: 나무위키")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1247817281484881958/1270376432526168205/kh_u9UOL2mRZzX3A0lCFxfFcqtgnC1Ed7FvlcWnN3TykKJD-S_ABE3yCDb_UnWc-lfIz-md2MuQ6bTVs019XrQ.png")
         await ctx.respond(embed=embed)
 
+@bot.slash_command(description="뉴진스 다니엘에 대한 소개를 전송해요!")
+async def 다니엘(ctx):
+        embed = discord.Embed(title="다니엘", description="", color=0x0082ff)
+        embed.add_field(name="활동명", value="다니엘 (Danielle)", inline=True)
+        embed.add_field(name="본명", value="Danielle June Marsh (다니엘 준 마쉬) / 모지혜 (牟智慧, Mo Jihye)", inline=True)
+        embed.add_field(name="소속 그룹", value="NewJeans", inline=True)
+        embed.add_field(name="출생", value="2005년 4월 11일 (만 19세)", inline=True)
+        embed.add_field(name="신체", value="165cm, AB형", inline=True)
+        embed.add_field(name="소속사", value="ADOR", inline=True)
+        embed.set_footer(text="출처: 나무위키")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1247817281484881958/1270368554620948510/c4f00b5408186e5c076b4607639d07ab.png")  # Replace with the actual URL of 
+        await ctx.respond(embed=embed)
+
+@bot.slash_command(description="뉴진스 민지의 대한 소개를 전송해요!")
+async def 민지(ctx):
+        embed = discord.Embed(title="민지", description="", color=0x0082ff)
+        embed.add_field(name="활동명", value="민지 (MINJI)", inline=True)
+        embed.add_field(name="본명", value="김민지 (金玟池, Kim Minji)", inline=True)
+        embed.add_field(name="소속 그룹", value="NewJeans", inline=True)
+        embed.add_field(name="출생", value="2004년 5월 7일 (만 20세)", inline=True)
+        embed.add_field(name="신체", value="169cm, A형", inline=True)
+        embed.add_field(name="소속사", value="ADOR", inline=True)
+        embed.set_footer(text="출처: 나무위키")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1247817281484881958/1270369633022644357/IMG_1912.png")
+        await ctx.respond(embed=embed)
+
+@bot.slash_command(description="뉴진스 해린에 대한 소개를 전송해요!")
+async def 해린(ctx):
+        embed = discord.Embed(title="해린", description="", color=0x0082ff)
+        embed.add_field(name="활동명", value="해린 (Haerin)", inline=True)
+        embed.add_field(name="본명", value="강해린 (姜諧潾, Kang Haerin)", inline=True)
+        embed.add_field(name="소속 그룹", value="NewJeans", inline=True)
+        embed.add_field(name="출생", value="2006년 5월 15일 (만 18세)", inline=True)
+        embed.add_field(name="신체", value="165cm, B형", inline=True)
+        embed.add_field(name="소속사", value="ADOR", inline=True)
+        embed.set_footer(text="출처: 나무위키")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1247817281484881958/1270371518068686883/4458a6af23c7c63b891b5f557f609e68.png")
+        await ctx.respond(embed=embed)
+
+@bot.slash_command(description="뉴진스 혜인에 대한 소개를 전송해요!")
+async def 혜인(ctx):
+        embed = discord.Embed(title="혜인", description="", color=0x0082ff)
+        embed.add_field(name="활동명", value="혜인 (Hyein)", inline=True)
+        embed.add_field(name="본명", value="이혜인 (李惠仁, Lee Hyein)", inline=True)
+        embed.add_field(name="소속 그룹", value="NewJeans", inline=True)
+        embed.add_field(name="출생", value="2008년 4월 21일 (만 16세)", inline=True)
+        embed.add_field(name="신체", value="170cm, O형", inline=True)
+        embed.add_field(name="소속사", value="ADOR", inline=True)
+        embed.set_footer(text="출처: 나무위키")
+        embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/1247817281484881958/1270374488629842111/5_J4ISygzRHOsh0v5_wrRkQpYT0FtgMmLRLJh-3QrtZXOi1I_7YE8dj5AgESn0sRosLzSZww3HPjMQvHXBE_kg.png")
+        await ctx.respond(embed=embed)
+        
 @bot.slash_command(description="하니봇 개발자에 대한 정보를 전송해요!")
 async def 개발자(ctx):
         user_id = '837570564536270848'
@@ -243,78 +375,89 @@ async def 개발자(ctx):
 #        view.add_item(button)
 #        await ctx.respond(embed=embed, view=view)
 
-@bot.slash_command(description="서버 정보를 확인할수 있어요!")
+@bot.slash_command(description="서버 정보를 확인할 수 있어요!")
 async def 서버정보(ctx):
-        guild = ctx.guild
-        boost_level = guild.premium_tier
-        boost_count = guild.premium_subscription_count
-        
-        if boost_level == 0:
-            boost_tier = "부스트 없음"
-        elif boost_level == 1:
-            boost_tier = "레벨 1"
-        elif boost_level == 2:
-            boost_tier = "레벨 2"
-        elif boost_level == 3:
-            boost_tier = "레벨 3"
-        else:
-            boost_tier = "알 수 없음"
-        
-        server_icon_url = guild.icon.url if guild.icon else discord.Embed.Empty
-        
-        embed = discord.Embed(title=f'{guild.name} 서버 정보', color=discord.Color.blue())
-        embed.set_thumbnail(url=server_icon_url)
-        embed.add_field(name='서버 이름', value=guild.name, inline=True)
-        embed.add_field(name='멤버 수', value=guild.member_count, inline=True)
-        embed.add_field(name='부스트 레벨', value=boost_tier, inline=True)
-        embed.add_field(name='부스트 횟수', value=boost_count, inline=True)
-        embed.add_field(name='역할', value=len(guild.roles), inline=True)
-        embed.add_field(name='텍스트 채널', value=len(guild.text_channels), inline=True)
-        embed.add_field(name='음성 채널', value=len(guild.voice_channels), inline=True)
-        embed.add_field(name='서버 ID', value=guild.id, inline=True)
-        await ctx.respond(embed=embed)
-
+    guild = ctx.guild
+    boost_level = guild.premium_tier
+    
+    # 부스트 레벨
+    boost_tier = {
+        0: "부스트 없음",
+        1: "레벨 1",
+        2: "레벨 2",
+        3: "레벨 3"
+    }.get(boost_level, "알 수 없음")
+    
+    # 서버 아이콘 URL
+    server_icon_url = guild.icon.url if guild.icon else discord.Embed.Empty
+    
+    server_creation_unix_timestamp = int(guild.created_at.timestamp())
+    server_creation_timestamp = f"<t:{server_creation_unix_timestamp}:D>"  # Discord 타임스탬프 포맷으로 변환
+    
+    embed = discord.Embed(title=f'{guild.name} 서버 정보', color=discord.Color.blue())
+    embed.set_thumbnail(url=server_icon_url)
+    embed.add_field(name='서버 이름', value=guild.name, inline=True)
+    embed.add_field(name='멤버 수', value=guild.member_count, inline=True)
+    embed.add_field(name='부스트 레벨', value=boost_tier, inline=True)
+    embed.add_field(name='역할 수', value=len(guild.roles), inline=True)
+    embed.add_field(name='텍스트 채널 수', value=len(guild.text_channels), inline=True)
+    embed.add_field(name='음성 채널 수', value=len(guild.voice_channels), inline=True)
+    embed.add_field(name='서버 생성 일자', value=server_creation_timestamp, inline=True)
+    embed.set_footer(text=f'서버 ID: {guild.id}')
+    await ctx.respond(embed=embed)
+    
 @bot.slash_command(description="하니봇의 정보를 알려줘요!")
 async def 봇정보(ctx):
-        # 봇의 기본 정보
-        bot_name = bot.user.name
-        bot_id = bot.user.id
-        server_count = len(bot.guilds)
-        boot_time_unix = int(boot_time.timestamp())
-        
-        # 코드 길이 측정
-        code_file_path = os.path.abspath(__file__)
-        with open(code_file_path, 'r', encoding='utf-8') as file:
-            code_length = len(file.readlines())
-        
-        # 개발자 멘션
-        developer_mention = f'<@{DEVELOPER_ID}>'
+    # 봇의 기본 정보
+    bot_name = bot.user.name
+    bot_id = bot.user.id
+    server_count = len(bot.guilds)
+    boot_time_unix = int(boot_time.timestamp())
+    
+    # 코드 길이 측정
+    code_file_path = os.path.abspath(__file__)
+    with open(code_file_path, 'r', encoding='utf-8') as file:
+        code_length = len(file.readlines())
+    
+    # 개발자 멘션
+    developer_mention = f'<@{DEVELOPER_ID}>'
 
-        total_users = sum(guild.member_count for guild in bot.guilds)
-        latency = bot.latency * 1000  # 초 단위의 지연 시간을 밀리초로 변환
-        
-        # 봇 정보 Embed 생성
-        bot_info_embed = discord.Embed(title=f'{bot_name}의 정보', color=discord.Color.blue())
-        bot_info_embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else discord.Embed.Empty)
-        bot_info_embed.add_field(name='봇 이름', value=bot_name, inline=True)
-        bot_info_embed.add_field(name='봇 ID', value=bot_id, inline=True)
-        bot_info_embed.add_field(name='핑', value=f"🏓: {latency:.2f} ms!", inline=True)
-        bot_info_embed.add_field(name='접속된 서버 수', value=server_count, inline=True)
-        bot_info_embed.add_field(name='사용자 수', value=total_users, inline=True)
-        bot_info_embed.add_field(name='부팅 시간', value=f'<t:{boot_time_unix}:R>', inline=True)
-        bot_info_embed.add_field(name='코드 길이', value=f'{code_length} lines', inline=True)
-        bot_info_embed.add_field(name='봇 버전', value=BOT_VERSION, inline=True)
-        bot_info_embed.add_field(name='봇 개발 언어', value='py-cord', inline=True)
-        bot_info_embed.add_field(name='웹사이트', value="[Hannibot](https://hannibot.vercel.app/)")
-        bot_info_embed.add_field(name='개발자', value=developer_mention, inline=True)
+    total_users = sum(guild.member_count for guild in bot.guilds)
+    latency = bot.latency * 1000  # 초 단위의 지연 시간을 밀리초로 변환
+    
+    # 봇 정보 Embed 생성
+    bot_info_embed = discord.Embed(title=f'{bot_name}의 정보', color=discord.Color.blue())
+    bot_info_embed.set_thumbnail(url=bot.user.avatar.url if bot.user.avatar else discord.Embed.Empty)
+    bot_info_embed.add_field(name='봇 이름', value=bot_name, inline=True)
+    bot_info_embed.add_field(name='봇 ID', value=bot_id, inline=True)
+    bot_info_embed.add_field(name='핑', value=f"🏓: {latency:.2f} ms!", inline=True)
+    bot_info_embed.add_field(name='서버 수', value=server_count, inline=True)
+    bot_info_embed.add_field(name='이용자 수', value=total_users, inline=True)
+    bot_info_embed.add_field(name='부팅 시간', value=f'<t:{boot_time_unix}:R>', inline=True)
+    bot_info_embed.add_field(name='코드 길이', value=f'{code_length} lines', inline=True)
+    bot_info_embed.add_field(name='봇 버전', value=BOT_VERSION, inline=True)
+    bot_info_embed.add_field(name='봇 개발 언어', value='py-cord', inline=True)
+    
+    # Create buttons for the website and support server
+    view = discord.ui.View()
+    website_button = discord.ui.Button(
+        label="웹사이트 방문", 
+        url='https://hannibot.netlify.app', 
+        style=discord.ButtonStyle.primary
+    )
+    support_server_button = discord.ui.Button(
+        label="서포트 서버", 
+        url='https://discord.gg/8xZtuQ5rsr', 
+        style=discord.ButtonStyle.primary
+    )
+    
+    view.add_item(website_button)
+    view.add_item(support_server_button)
+    
+    # Add the developer mention field
+    bot_info_embed.add_field(name='개발자', value=developer_mention, inline=True)
 
-        # Create a button
-        view = discord.ui.View()
-        button = discord.ui.Button(label="서포트 서버", url='https://discord.gg/8xZtuQ5rsr')
-        view.add_item(button)
-        
-        await ctx.respond(embed=bot_info_embed, view=view)
-
+    await ctx.respond(embed=bot_info_embed, view=view)
 
 @bot.slash_command(description="멘션한 유저를 서버에서 추방해요!")
 @discord.option(name='유저', description='유저을 선택해주세요')
@@ -351,18 +494,33 @@ async def set_balance_error(ctx, error):
         await ctx.respond(embed=embed)
 
 @bot.slash_command(description="멘션한 유저를 서버에서 추방해요!")
-@discord.option(name='유저', description='유저를 멘션해주세요!')
-@discord.option(name='사유', description='사유를 입력해주세요!')
+@discord.option(name='유저', description='유저를 멘션해주세요!', type=discord.Member)
+@discord.option(name='사유', description='사유를 입력해주세요!', required=False)
 @commands.has_permissions(ban_members=True)
-async def 벤(ctx, 유저: discord.Member, 사유: str):
-        member = 유저
-        reason = 사유 if 사유 else '사유 없음'
+async def 벤(ctx, 유저: discord.Member, 사유: str = '사유 없음'):
+    member = 유저
+    reason = 사유
 
+    try:
         await ctx.guild.ban(member, reason=reason)
 
         embed = discord.Embed(
-            description=f"{member.name} 님을 서버에서 차단했어요!",
-            color=discord.Color.green()
+            description=f"{member.name} 님을 서버에서 차단했어요! 사유: {reason}",
+            color=discord.Color.red()
+        )
+        await ctx.respond(embed=embed)
+    except discord.Forbidden:
+        embed = discord.Embed(
+            title="오류",
+            description="권한이 부족하여 사용자를 차단할 수 없습니다.",
+            color=discord.Color.red()
+        )
+        await ctx.respond(embed=embed)
+    except Exception as e:
+        embed = discord.Embed(
+            title="오류",
+            description=f"사용자를 차단하는 동안 오류가 발생했습니다: {str(e)}",
+            color=discord.Color.red()
         )
         await ctx.respond(embed=embed)
 
@@ -385,52 +543,97 @@ async def set_balance_error(ctx, error):
         await ctx.respond(embed=embed)
         
 @bot.slash_command(description="채널의 메시지를 삭제합니다.")
-@discord.option(name='수량', type=int , description='지울 메시지 수를 입력해주세요')
+@discord.option(name='수량', type=int, description='지울 메시지 수를 입력해주세요 (14일이 지난 메세지는 삭제가 불가능합니다.)')
 async def 청소(ctx, 수량: int):
-    if ctx.author.guild_permissions.manage_messages:
-        try:
-            if 수량 <= 0:
-                await ctx.respond("지울 메시지 수는 1 이상이어야 해요!", ephemeral=True)
-                return
-
-            # 메시지 삭제
-            deleted = await ctx.channel.purge(limit=수량 + 1)
-
-            embed = discord.Embed(
-                title=f"{len(deleted) - 1}개의 메시지가 삭제되었어요!",
-                colour=discord.Colour.green()
-            )
-
-            view = discord.ui.View()
-            button = discord.ui.Button(label="서포트 서버", url='https://discord.gg/8xZtuQ5rsr')
-            view.add_item(button)
-
-            response = await ctx.respond(embed=embed, view=view)
-            msg = await response.original_response()
-
-            # 메시지 삭제 대기 시간
-            await asyncio.sleep(10)
-            await msg.delete()
-
-        except discord.Forbidden:
-            embed = discord.Embed(
-                description="봇에게 메시지를 관리할 권한이 없어요! 봇에게 권한을 지급해주세요!",
-                color=discord.Color.red()
-            )
-            await ctx.respond(embed=embed, ephemeral=True)
-        except Exception as e:
-            embed = discord.Embed(
-                description=f"오류 발생: {str(e)}",
-                color=discord.Color.red()
-            )
-            await ctx.respond(embed=embed, ephemeral=True)
-
-    else:
+    if not ctx.author.guild_permissions.manage_messages:
         embed = discord.Embed(
-            description="권한이 부족하여 명령어를 처리할 수 없습니다!",
-            colour=discord.Colour.red()
+            description="권한이 부족하여 명령어를 처리할 수 없어요!",
+            colour=discord.Color.red()
         )
         await ctx.respond(embed=embed, ephemeral=True)
+        return
+
+    await ctx.defer()  # 상호작용 시간 초과를 방지하기 위해 지연 응답 사용
+
+    try:
+        if 수량 <= 0:
+            await ctx.followup.send("지울 메시지 수는 1 이상이어야 해요!", ephemeral=True)
+            return
+
+        deleted_count = 0
+        messages_to_delete = []
+        
+        async for message in ctx.channel.history(limit=100):  # 100개씩 가져오기
+            # 메시지가 14일 이내일 경우에만 삭제 목록에 추가
+            if (discord.utils.utcnow() - message.created_at).days < 14:
+                messages_to_delete.append(message)
+                if len(messages_to_delete) == 수량:
+                    break
+
+        if not messages_to_delete:
+            await ctx.followup.send("삭제할 수 있는 메시지가 없습니다!", ephemeral=True)
+            return
+
+        # 메시지 삭제 시도
+        headers = {
+            'Authorization': f'Bot {TOKEN}',
+            'Content-Type': 'application/json'
+        }
+
+        async with aiohttp.ClientSession() as session:
+            message_ids = [msg.id for msg in messages_to_delete]
+            data = {'messages': message_ids}
+            
+            try:
+                async with session.post(f'https://discord.com/api/v10/channels/{ctx.channel.id}/messages/bulk-delete', headers=headers, json=data) as response:
+                    if response.status == 204:
+                        deleted_count += len(message_ids)
+                    else:
+                        error_msg = await response.text()
+                        raise discord.HTTPException(response=response, text=error_msg)
+            except discord.HTTPException:
+                # 삭제 불가한 메시지가 있는 경우, 예외를 무시하고 계속 진행
+                pass
+
+        embed = discord.Embed(
+            title=f"{deleted_count}개의 메시지가 삭제되었어요!",
+            description=f"요청한 메시지 수: {수량}개 / 실제 삭제된 메시지 수: {deleted_count}개",
+            color=discord.Color.green()
+        )
+        view = discord.ui.View()
+        button = discord.ui.Button(label="서포트 서버", url='https://discord.gg/8xZtuQ5rsr')
+        view.add_item(button)
+        response_message = await ctx.followup.send(embed=embed, view=view)
+
+        # 5초 후에 명령어 메시지 삭제
+        await asyncio.sleep(5)
+        try:
+            await ctx.delete()
+        except discord.NotFound:
+            pass  # 이미 삭제된 경우 무시
+        
+        # 5초 후에 삭제 완료 메시지 삭제
+        await asyncio.sleep(5)
+        try:
+            await response_message.delete()
+        except discord.NotFound:
+            pass  # 이미 삭제된 경우 무시
+
+    except discord.Forbidden:
+        # 사용자가 권한이 없을 때의 오류 처리
+        embed = discord.Embed(
+            description="봇에게 메시지를 관리할 권한이 없어요! / 봇에게 권한을 지급해주세요!",
+            color=discord.Color.red()
+        )
+        await ctx.followup.send(embed=embed, ephemeral=True)
+    except Exception as e:
+        # 모든 다른 예외 처리, 로그 기록은 하지 않음
+        embed = discord.Embed(
+            description=f"메시지 삭제 중 오류가 발생했어요: {str(e)}",
+            color=discord.Color.red()
+        )
+        await ctx.followup.send(embed=embed, ephemeral=True)
+        # 오류 메시지를 사용자에게 전송하고, 로그는 기록하지 않음
     
 @bot.slash_command(description="뉴진스의 최신곡 정보를 전송해요!")
 async def 최신곡(ctx):
@@ -501,7 +704,7 @@ async def 하입보이(ctx):
 @bot.slash_command(description="봇의 핑을 확인하실수 있어요!")
 async def 핑(ctx):
     latency = round(bot.latency * 1000)
-    embed = discord.Embed(title="Pong!", description=f"현재 핑은 {round(bot.latency * 500)}ms 이에요!", color=0x0082ff)
+    embed = discord.Embed(title="Pong!", description=f"현재 핑은 {round(bot.latency)}ms 이에요!", color=0x0082ff)
     # Create a button
     view = discord.ui.View()
     button = discord.ui.Button(label="서포트 서버", url=f'https://discord.gg/8xZtuQ5rsr')
@@ -537,14 +740,17 @@ async def 유저정보(ctx, 유저: discord.Member):
         # 경고 횟수 가져오기
         warning_count = warnings.get(유저.id, 0)
         join_unix_timestamp = int(유저.joined_at.timestamp())
-        join_timestamp = f"<t:{join_unix_timestamp}:D>"  # F 스타일: YYYY년 MM월 DD일 오전/오후 HH시 mm분
+        join_timestamp = f"<t:{join_unix_timestamp}:D>"  # 서버 참여 일자
+
+        account_create_unix_timestamp = int(유저.created_at.timestamp())
+        account_create_timestamp = f"<t:{account_create_unix_timestamp}:D>"  # 계정 생성 일자
 
         embed = discord.Embed(title=f"{유저}님의 정보", color=0x0082ff)
         embed.set_thumbnail(url=유저.avatar.url if 유저.avatar else discord.Embed.Empty)
         embed.add_field(name="유저 이름", value=유저.name, inline=True)
         embed.add_field(name="유저 ID", value=유저.id, inline=True)
         embed.add_field(name="서버 참여 일자", value=join_timestamp, inline=True)
-        embed.add_field(name="계정 생성 일자", value=유저.created_at.strftime("%Y년 %m월 %d일"), inline=True)
+        embed.add_field(name="계정 생성 일자", value=account_create_timestamp, inline=True)
         embed.add_field(name="경고 횟수", value=warning_count, inline=True)
 
         # Create a button
@@ -648,21 +854,36 @@ async def 상태(ctx, 유저: discord.Member = None):
             view.add_item(button)
             await ctx.respond(embed=embed, view=view)
         
-@bot.slash_command(description="골라")
-@discord.option(name='옵션', type=int, description='봇이 고를 옵션을 입력해주세요!')                  
-async def 골라(ctx, 옵션=int):
-    if len(옵션) < 2:
-        await ctx.respond("2개 이상 입력해주세요!")
+@bot.slash_command(description="주어진 옵션 중에서 하나를 골라요!")
+@discord.option(name='옵션', description='봇이 고를 옵션을 입력해주세요! (띄어쓰기로 구분)')
+async def 골라(ctx, 옵션: str):
+    # 띄어쓰기로 옵션을 분리
+    옵션_목록 = [opt.strip() for opt in 옵션.split()]
+    
+    if len(옵션_목록) < 2:
+        await ctx.respond("2개 이상의 옵션을 입력해주세요!")
     else:
-        picked_option = random.choice(옵션)
-        await ctx.respond(f"저는 {picked_option}이(가) 더 좋아요!")
+        선택된_옵션 = random.choice(옵션_목록)
+        embed = discord.Embed(
+            title="옵션 선택 결과",
+            description=f"저는 **{선택된_옵션}**이(가) 더 좋아요!",
+            color=discord.Color.blue()
+        )
+
+        # Fallback to default avatar if user has no custom avatar
+        avatar_url = ctx.author.avatar.url if ctx.author.avatar else ctx.author.default_avatar.url
+
+        # 멘션 추가
+        embed.set_footer(text=f"요청자: {ctx.author.display_name}", icon_url=avatar_url)
+        await ctx.respond(embed=embed)
 
 @bot.slash_command(description="멘션한 유저에게 경고를 지급해요!")
 @commands.has_permissions(administrator=True)
 @discord.option(name='유저', description='유저를 멘션해주세요!')
+@discord.option(name='사유', description='경고 사유를 입력해주세요!')
 async def 경고(ctx, 유저: discord.Member, 사유: str):
     if 유저 == ctx.author:
-        await ctx.respond('자신에게 경고를 줄 수 없어요!')
+        await ctx.respond('자신에게 경고를 줄 수 없어요!', ephemeral=True)
         return
 
     if 유저.id not in warnings:
@@ -670,33 +891,39 @@ async def 경고(ctx, 유저: discord.Member, 사유: str):
 
     warnings[유저.id].append(사유)
     await ctx.respond(f'{유저.mention}님에게 경고를 지급했어요!')
-    
+
 @경고.error
-async def set_balance_error(ctx, error):
+async def 경고_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         embed = discord.Embed(
             title='권한 부족',
             description='이 명령어를 사용하려면 관리자 권한이 필요해요!',
             color=discord.Color.red()
         )
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, ephemeral=True)
     else:
-        # Handle other errors
+        # 다른 오류 처리
         embed = discord.Embed(
-            title='오류',
+            title='오류 발생',
             description='명령어를 실행하는 중에 오류가 발생했어요!',
             color=discord.Color.red()
         )
-        await ctx.respond(embed=embed)
-        
-@bot.slash_command(description="하니봇 개발자에 대한 정보를 전송해요!")
+        await ctx.respond(embed=embed, ephemeral=True)
+
+@bot.slash_command(description="유저의 경고 횟수를 볼 수 있어요!")
+@discord.option(name='유저', description='경고 목록을 확인할 유저를 멘션해주세요!')
 async def 경고목록(ctx, 유저: discord.Member):
     try:
         if not ctx.author.guild_permissions.administrator:
             raise commands.MissingPermissions(["administrator"])
         
         if 유저.id not in warnings or not warnings[유저.id]:
-            await ctx.respond(f'{유저.mention}님은 경고를 받은 적이 없으신 거 같아요!')
+            embed = discord.Embed(
+                title=f'{유저}님의 경고 목록',
+                description='현재 경고가 없습니다.',
+                color=discord.Color.green()
+            )
+            await ctx.respond(embed=embed)
             return
         
         embed = discord.Embed(
@@ -704,39 +931,46 @@ async def 경고목록(ctx, 유저: discord.Member):
             color=discord.Color.red()
         )
         for i, warning in enumerate(warnings[유저.id], 1):
-            embed.add_field(name=f'`{i}`번째 받은 경고', value=warning, inline=False)
+            # 경고 사유를 필드에 추가
+            embed.add_field(name=f'`{i}`번째 경고', value=f'사유: {warning}', inline=True)
         
         await ctx.respond(embed=embed)
     
     except commands.MissingPermissions as e:
-        await ctx.respond(f"권한이 부족합니다. 필요한 권한: {', '.join(e.missing_perms)}")          
+        embed = discord.Embed(
+            title='권한 부족',
+            description=f"이 명령어를 사용하려면 다음 권한이 필요해요: {', '.join(e.missing_perms)}",
+            color=discord.Color.red()
+        )
+        await ctx.respond(embed=embed, ephemeral=True)
 
 @경고목록.error
-async def set_balance_error(ctx, error):
+async def 경고목록_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         embed = discord.Embed(
             title='권한 부족',
             description='이 명령어를 사용하려면 관리자 권한이 필요해요!',
             color=discord.Color.red()
         )
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, ephemeral=True)
     else:
-        # Handle other errors
+        # 다른 오류 처리
         embed = discord.Embed(
-            title='오류',
+            title='오류 발생',
             description='명령어를 실행하는 중에 오류가 발생했어요!',
             color=discord.Color.red()
         )
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, ephemeral=True)
         
 @bot.slash_command(name='투표', description='투표를 생성해요!')
 @commands.has_permissions(administrator=True)
-@discord.option("question", str, description="투표 주제를 입력해주세요!")
-@discord.option("option1", str, description="첫 번째 항목을 입력해주세요!")
-@discord.option("option2", str, description="두 번째 항목을 입력해주세요!")
-@discord.option("option3", str, description="세 번째 항목을 입력해주세요!", required=False)
-@discord.option("option4", str, description="네 번째 항목을 입력해주세요!", required=False)
-@discord.option("option5", str, description="다섯 번째 항목을 입력해주세요!", required=False)
+@discord.option("제목", str, description="투표 주제를 입력해주세요!")
+@discord.option("항목1", str, description="첫 번째 항목을 입력해주세요!")
+@discord.option("항목2", str, description="두 번째 항목을 입력해주세요!")
+@discord.option("항목3", str, description="세 번째 항목을 입력해주세요!", required=False)
+@discord.option("항목4", str, description="네 번째 항목을 입력해주세요!", required=False)
+@discord.option("항목5", str, description="다섯 번째 항목을 입력해주세요!", required=False)
+@discord.option("항목6", str, description="여섯 번째 항목을 입력해주세요!", required=False)
 async def 투표(ctx, 제목: str, 항목1: str, 항목2: str, 항목3: str = None, 항목4: str = None, 항목5: str = None, 항목6: str = None):
     options = [항목1, 항목2, 항목3, 항목4, 항목5, 항목6]
     options = [option for option in options if option is not None]
@@ -747,11 +981,14 @@ async def 투표(ctx, 제목: str, 항목1: str, 항목2: str, 항목3: str = No
     if len(options) > 6:
         await ctx.respond('최대 6개까지만 가능합니다!', ephemeral=True)
         return
-    
-    embed = discord.Embed(title=제목, description='\n'.join([f'{i+1}. {option}' for i, option in enumerate(options)]))
+
+    embed = discord.Embed(title=제목, color=discord.Color.blue())
+    for i, option in enumerate(options):
+        embed.add_field(name=f'옵션 {i+1}', value=option, inline=True)
+
     poll_message = await ctx.respond(embed=embed)
     poll_message = await poll_message.original_response()
-    
+
     for i in range(len(options)):
         await poll_message.add_reaction(chr(127462 + i))
         
@@ -803,13 +1040,26 @@ async def 타이머(ctx, 시간: str):
     view.add_item(button)
     await ctx.respond(embed=embed, view=view)
 
-@bot.slash_command(description="공지를 전송해요!")
+@bot.slash_command(description="에브리원 공지를 전송해요!")
 @commands.has_permissions(administrator=True)
-@discord.option(name='내용', description='공지를 할 내용을 적어주세요!')
-@commands.cooldown(1, 120, commands.BucketType.user)  # (갯수, 시간(초), 버켓타입)
-async def 공지사항(ctx, 공지=int):
-    embed = discord.Embed(title="공지사항", description=공지, color=discord.Color.red())
-    await ctx.respond("||@everyone||", embed=embed)
+@discord.option(name='내용', description='공지를 할 내용을 적어주세요! (관리자 권한이 필요해요!)')
+@discord.option(name='색상', description='임베드 색상을 선택해주세요!', choices=['빨간색', '초록색', '파란색'])
+@discord.option(name='멘션', description='에브리원 멘션 여부를 선택해주세요!', choices=['멘션', '노멘션'])
+@commands.cooldown(1, 120, commands.BucketType.user)  # (갯수, 시간(초), 버켓타입
+async def 공지사항(ctx, 내용: str, 색상: str = 'red', 멘션: str = 'yes'):
+    color_dict = {
+        'red': discord.Color.red(),
+        'green': discord.Color.green(),
+        'blue': discord.Color.blue()
+    }
+
+    embed_color = color_dict.get(색상, discord.Color.red())
+    embed = discord.Embed(title="공지사항", description=내용, color=embed_color)
+    
+    if 멘션 == 'yes':
+        await ctx.respond("||@everyone||", embed=embed)
+    else:
+        await ctx.respond(embed=embed)
 
     await ctx.message.delete()
 
@@ -912,13 +1162,12 @@ async def 도박(ctx, 베팅액: int):
             await ctx.respond(embed=embed)
             return
 
-        if 베팅액 <= 1000:
-            embed = discord.Embed(
-                title='도박 실패',
-                description='1000 이상의 금액을 입력해주세요.',
-                color=discord.Color.red()
-            )
-            await ctx.respond(embed=embed)
+        if 베팅액 <= 0:
+            await ctx.respond("베팅액은 양수여야 해요!", ephemeral=True)
+            return
+
+        if 베팅액 < 1000:
+            await ctx.respond("베팅액은 최소 1,000원 이상이어야 해요!", ephemeral=True)
             return
 
         if user_data[user_id]['money'] < 베팅액:
@@ -1014,7 +1263,7 @@ async def 출첵(ctx):
             color=discord.Color.red()
         )
         await ctx.respond(embed=embed)
-        
+            
 # 잔고 설정 명령어
 @bot.slash_command(description="멘션한 유저의 금액을 조정해요!")
 @commands.is_owner()
@@ -1191,7 +1440,7 @@ async def 일일퀴즈(ctx):
             return msg.author == ctx.author and msg.channel == ctx.channel
 
         try:
-            msg = await bot.wait_for('message', check=check, timeout=30)
+            msg = await bot.wait_for('messaghttps://discord.com/developers/applicationse', check=check, timeout=30)
             if msg.content == quiz["answer"]:
                 reward_amount = random.randint(2000, 5000)
                 user_data[user_id]['money'] += reward_amount
@@ -1228,7 +1477,7 @@ async def 일일퀴즈(ctx):
 
 @bot.slash_command(description="베팅한 금액으로 주사위를 돌려요!")
 @discord.option(name='베팅액', description='베팅할 금액을 입력해주세요!')
-async def 주사위(ctx, 베팅액: int, bet: int):
+async def 주사위(ctx, 베팅액: int):
     try:
         user_id = str(ctx.author.id)
         user_data = load_user_data()
@@ -1241,14 +1490,13 @@ async def 주사위(ctx, 베팅액: int, bet: int):
             )
             await ctx.respond(embed=embed)
             return
-
+        
         if 베팅액 <= 0:
-            embed = discord.Embed(
-                title='도박 실패',
-                description='1 이상의 금액을 입력해주세요!',
-                color=discord.Color.red()
-            )
-            await ctx.respond(embed=embed)
+            await ctx.respond("베팅액은 양수여야 해요!", ephemeral=True)
+            return
+
+        if 베팅액 < 1000:
+            await ctx.respond("베팅액은 최소 1,000원 이상이어야 해요!", ephemeral=True)
             return
 
         if user_data[user_id]['money'] < 베팅액:
@@ -1261,7 +1509,7 @@ async def 주사위(ctx, 베팅액: int, bet: int):
             return
 
         dice_roll = random.randint(1, 6)
-        if dice_roll == bet:
+        if dice_roll == 베팅액:
             winnings = 베팅액 * 6
             user_data[user_id]['money'] += winnings
             description = f'주사위가 {dice_roll}이 나와서 {winnings}원을 얻었습니다!'
@@ -1297,19 +1545,18 @@ async def 슬롯머신(ctx, 베팅액: int):
         if user_id not in user_data:
             embed = discord.Embed(
                 title='도박 실패',
-                description='도박 서비스에 가입되지 않아 슬롯 머신을 플레이하지 못했어요! / `하니야 가입` 명령어로 가입할 수 있어요!',
+                description='도박 서비스에 가입되지 않아 슬롯 머신을 플레이하지 못했어요! / `/가입` 명령어로 가입할 수 있어요!',
                 color=discord.Color.red()
             )
             await ctx.respond(embed=embed)
             return
 
         if 베팅액 <= 0:
-            embed = discord.Embed(
-                title='도박 실패',
-                description='1 이상의 금액을 입력해주세요!',
-                color=discord.Color.red()
-            )
-            await ctx.respond(embed=embed)
+            await ctx.respond("베팅액은 양수여야 해요!", ephemeral=True)
+            return
+
+        if 베팅액 < 1000:
+            await ctx.respond("베팅액은 최소 1,000원 이상이어야 해요!", ephemeral=True)
             return
 
         if user_data[user_id]['money'] < 베팅액:
@@ -1329,11 +1576,11 @@ async def 슬롯머신(ctx, 베팅액: int):
         if slot1 == slot2 == slot3:
             winnings = 베팅액 * 5
             user_data[user_id]['money'] += winnings
-            description = f'슬롯 머신 결과: {slot1} {slot2} {slot3}. 모두 동일하여 {winnings}원을 얻었습니다!'
+            description = f'슬롯 머신 결과: {slot1} {slot2} {slot3}. / 모두 동일하여 {winnings}원을 얻었습니다!'
             color = discord.Color.green()
         else:
             user_data[user_id]['money'] -= 베팅액
-            description = f'슬롯 머신 결과: {slot1} {slot2} {slot3}. 일치하지 않아서 {베팅액}원을 잃었습니다..'
+            description = f'슬롯 머신 결과: {slot1} {slot2} {slot3}. / 일치하지 않아서 {베팅액}원을 잃었습니다..'
             color = discord.Color.red()
 
         save_user_data(user_data)
@@ -1384,13 +1631,12 @@ class RouletteView(discord.ui.View):
         if result == color:
             winnings = self.amount * (14 if color == "초록색" else 2)
             guild_data["balances"][self.ctx.author.id] = user_balance + winnings
-            await self.ctx.respond(f'룰렛 결과: {result}!ㅣ{winnings}원을을 얻으셨어요!')
+            await self.ctx.respond(f'룰렛 결과: {result}!ㅣ{winnings}원을 얻으셨어요!')
         else:
             guild_data["balances"][self.ctx.author.id] = user_balance - self.amount
             await self.ctx.respond(f'룰렛 결과: {result}!ㅣ{self.amount}원을 잃으셨어요.')
 
         self.stop()
-
 # 룰렛
 @bot.slash_command(description="룰렛을 돌려요!")
 @discord.option(name='베팅액', description='베팅할 금액을 입력해주세요!')
@@ -1401,9 +1647,17 @@ async def 룰렛(ctx, 베팅액: int):
     if 베팅액 > user_balance:
         await ctx.respond   (f'잔액이 부족해요! 현재 잔액: {user_balance}')
         return
+    
+    if 베팅액 <= 0:
+        await ctx.respond("베팅액은 양수여야 해요!", ephemeral=True)
+        return
 
+    if 베팅액 < 1000:
+        await ctx.respond("베팅액은 최소 1,000원 이상이어야 해요!", ephemeral=True)
+        return
+    
     view = RouletteView(ctx, 베팅액)
-    await ctx.respond("베팅할 색깔을 선택해주세요!:", view=view)
+    await ctx.respond("베팅할 색깔을 선택해주세요!", view=view)
 
 @bot.event
 async def on_guild_join(guild):
@@ -1436,17 +1690,17 @@ async def update_koreanbots():
                 print(f":x: | 한디리 서버수 업데이트 실패 ({error_message})")
                 channel = bot.get_channel(CHANNEL_ID)
                 if channel:
-                    await channel.send(f":cryhanni: | 한디리 서버수 업데이트 실패 (``{error_message}``)")
+                    await channel.send(f":x: | 한디리 서버수 업데이트 실패 (``{error_message}``)")
             else:
                 success_message = (await res.json()).get('message', 'Success')
-                print(f":white_check_mark: | 한디리 서버수 업데이트 성공 ({success_message})")
+                print(f":white_check_mark: | 한디리 서버수 업데이트 성공")
                 channel = bot.get_channel(CHANNEL_ID)
                 if channel:
-                    await channel.send(f":bingkeybong: | 한디리 서버수 업데이트 성공 (``{success_message}``)")
+                    await channel.send(f":white_check_mark: | 한디리 서버수 업데이트 성공!")
 
-# 로또 구매 명령어
 @bot.slash_command(description="로또를 구매합니다!")
-async def 로또(ctx):
+@discord.option(name='수량', description='구매할 로또 수를 입력해주세요!', type=int, min_value=1)
+async def 로또(ctx, 수량: int):
     user_id = str(ctx.author.id)
     user_data = load_user_data()
 
@@ -1459,31 +1713,43 @@ async def 로또(ctx):
         await ctx.respond(embed=embed)
         return
 
-    if user_data[user_id]['money'] < 3000:  # 로또 구매 최소 금액 설정
+    # 기본 값이 None일 수 있는 경우 처리
+    user_money = user_data[user_id].get('money', 0)  # 기본값을 0으로 설정
+    if user_money is None:
+        user_money = 0
+
+    total_cost = 1000 * 수량
+    if user_money < total_cost:  # 로또 구매 최소 금액
         embed = discord.Embed(
             title='오류',
-            description='잔액이 부족합니다. 최소 3000원부터 로또를 구매할 수 있습니다.',
+            description=f'잔액이 부족합니다. 최소 {total_cost}원부터 로또를 구매할 수 있습니다.',
             color=discord.Color.red()
         )
         await ctx.respond(embed=embed)
         return
 
     # 로또 번호 생성 (1부터 45까지 중복 없는 번호 6개 선택)
-    lotto_numbers = random.sample(range(1, 46), 6)
-    user_data[user_id].setdefault('lotto', []).append(lotto_numbers)
-    user_data[user_id]['money'] -= 3000  # 로또 구매 금액 차감
+    all_lotto_numbers = []
+    for _ in range(수량):
+        lotto_numbers = random.sample(range(1, 46), 6)
+        all_lotto_numbers.append(lotto_numbers)
+
+    user_data[user_id].setdefault('lotto', []).extend(all_lotto_numbers)
+    user_data[user_id]['money'] -= total_cost  # 로또 구매 금액 차감
     save_user_data(user_data)
 
     embed = discord.Embed(
         title='로또 구매 완료',
-        description=f'로또를 성공적으로 구매했습니다! 구매한 번호: {lotto_numbers}\n\n구매 후 잔액: {user_data[user_id]["money"]}원',
+        description=f'로또를 {수량}개를 성공적으로 구매했습니다! / 구매한 번호:\n' + '\n'.join([str(numbers) for numbers in all_lotto_numbers]) +
+                    f'\n\n구매 후 잔액: {user_data[user_id]["money"]}원',
         color=discord.Color.green()
     )
 
-    await ctx.respond(embed=embed)  
+    await ctx.respond(embed=embed)
 
 @bot.slash_command(description="로또를 추첨합니다!")
 @commands.has_permissions(administrator=True)
+@commands.cooldown(1, 3600, commands.BucketType.user)  # 1시간 쿨타임 설정
 async def 로또추첨(ctx):
     user_id = str(ctx.author.id)
     user_data = load_user_data()
@@ -1491,7 +1757,7 @@ async def 로또추첨(ctx):
     if user_id not in user_data or 'lotto' not in user_data[user_id]:
         embed = discord.Embed(
             title='오류',
-            description='구매한 로또가 없습니다. 먼저 `/로또` 명령어로 로또를 구매해주세요!',
+            description='해당 서버에서 로또를 구매한 기록을 찾을 수 없어요!',
             color=discord.Color.red()
         )
         await ctx.respond(embed=embed)
@@ -1528,6 +1794,16 @@ async def 로또추첨(ctx):
     # 사용자 데이터에서 로또 정보 제거
     del user_data[user_id]['lotto']
     save_user_data(user_data)
+
+# 쿨다운 예외 처리
+@로또추첨.error
+async def 로또추첨_error(ctx, error):
+    if isinstance(error, CommandOnCooldown):
+        retry_after = round(error.retry_after, 2)
+        minutes, seconds = divmod(retry_after, 60)
+        await ctx.respond(f"쿨타임이 적용중이에요 `{int(minutes)}`분 `{int(seconds)}`초 후에 다시 시도해주세요!")
+    else:
+        await ctx.respond("오류가 발생했습니다. 다시 시도해 주세요.")
 
 def load_json(file):
     if not os.path.exists(file) or os.path.getsize(file) == 0:
@@ -1613,13 +1889,16 @@ async def handle_warning(ctx):
         await admin_channel.send(embed=embed, view=view)
         clear_user_warnings(user_id)
 
-@bot.event
-async def on_application_command(ctx):
-    if is_user_blacklisted(ctx.author.id):
-        await log_blacklist_use(ctx, "사용자가 블랙리스트에 등록되어 있습니다.")
-        await handle_warning(ctx)
-        return
-    await bot.process_application_commands(ctx)
+async def on_application_command(self, ctx):
+        try:
+            if is_user_blacklisted(ctx.author.id):
+                await log_blacklist_use(ctx, "블랙리스트에 등록되어 있어 명령어를 사용하실 수 없습니다..")
+                await handle_warning(ctx)
+                return
+            await self.process_application_commands(ctx)
+        except Exception as e:
+            await self.send_error_to_webhook(ctx, e)
+            raise  # 원래의 예외를 다시 발생시켜 기본 오류 처리기가 처리할 수 있게 합니다
 
 @bot.slash_command(description="Add a user to the blacklist")
 async def add_blacklist(ctx, user: discord.User, reason: str):
@@ -1645,16 +1924,25 @@ async def 블랙잭(ctx, 베팅액: int):
     if user_id not in user_data:
         embed = discord.Embed(
             title='게임 시작 실패',
-            description='도박 서비스에 가입되지 않아 게임을 진행할 수 없습니다! / `/가입` 명령어로 가입할 수 있어요!',
+            description='도박 서비스에 가입되지 않아 게임을 진행할 수 없습니다! `/가입` 명령어로 가입할 수 있어요!',
             color=discord.Color.red()
         )
         await ctx.respond(embed=embed)
+        return
+
+    if 베팅액 <= 0:
+        await ctx.respond("베팅액은 양수여야 해요!", ephemeral=True)
+        return
+
+    if 베팅액 < 1000:
+        await ctx.respond("베팅액은 최소 1,000원 이상이어야 해요!", ephemeral=True)
         return
 
     if user_data[user_id]['money'] < 베팅액:
         await ctx.respond("잔액이 부족해 베팅을 실패하였어요!")
         return
 
+    # 블랙잭 게임 로직
     def draw_card(deck):
         return deck.pop()
 
@@ -1691,8 +1979,8 @@ async def 블랙잭(ctx, 베팅액: int):
 
     if player_value == 21:
         reward_amount = 베팅액 * 2
-        user_data[user_id]['money'] += reward_amount
-        result = f"블랙잭! / 플레이어 승리! / {reward_amount}원을 획득했어요!"
+        user_data[user_id]['money'] += 베팅액  # 베팅액만 추가 (이미 가지고 있던 돈에 베팅액만큼 추가)
+        result = f"플레이어 승리! / {reward_amount}원을 획득했어요!"
     else:
         while dealer_value < 17:
             dealer_hand.append(draw_card(deck))
@@ -1700,7 +1988,7 @@ async def 블랙잭(ctx, 베팅액: int):
         
         if dealer_value > 21 or player_value > dealer_value:
             reward_amount = 베팅액 * 2
-            user_data[user_id]['money'] += reward_amount
+            user_data[user_id]['money'] += 베팅액  # 베팅액만 추가
             result = f"유저 승리! / {reward_amount}원을 획득했어요!"
         elif player_value < dealer_value:
             user_data[user_id]['money'] -= 베팅액
@@ -1731,6 +2019,14 @@ async def 포커(ctx, 베팅액: int):
         await ctx.respond(embed=embed)
         return
 
+    if 베팅액 <= 0:
+        await ctx.respond("베팅액은 양수여야 해요!", ephemeral=True)
+        return
+
+    if 베팅액 < 1000:
+        await ctx.respond("베팅액은 최소 1,000원 이상이어야 해요!", ephemeral=True)
+        return
+
     if user_data[user_id]['money'] < 베팅액:
         await ctx.respond("잔액이 부족해 베팅을 실패하였어요!")
         return
@@ -1746,7 +2042,7 @@ async def 포커(ctx, 베팅액: int):
 
     if player_wins:
         reward_amount = 베팅액 * 2
-        user_data[user_id]['money'] += reward_amount
+        user_data[user_id]['money'] += 베팅액  # 베팅액만 추가 (이미 가지고 있던 돈에 베팅액만큼 추가)
         result = f"승리! / {reward_amount}원을 획득하셨어요!"
     else:
         user_data[user_id]['money'] -= 베팅액
@@ -1769,6 +2065,133 @@ async def 채널잠금(ctx, 채널: discord.TextChannel):
     overwrite.send_messages = False
     await 채널.set_permissions(ctx.guild.default_role, overwrite=overwrite)
     await ctx.respond(f"{채널.mention} 채널을 잠궜어요!")
+    
+@bot.slash_command(description="버그를 제보하실수 있어요!")
+@discord.option("타입", description="버그의 타입을 선택해주세요!", choices=["오류", "버그", "건의사항"])
+@discord.option("내용", description="버그의 내용을 입력해주세요!")
+async def 버그제보(ctx, 타입: str, 내용: str):
+    developer = await bot.fetch_user(DEVELOPER_IDS)
 
+    embed = discord.Embed(title="버그 제보", color=discord.Color.red(), timestamp=datetime.now())
+    embed.add_field(name="제보한 유저", value=ctx.author.mention, inline=True)
+    embed.add_field(name="버그 타입", value=타입, inline=True)
+    embed.add_field(name="오류 내용", value=내용, inline=True)
+
+    try:
+        await developer.send(embed=embed)
+        await ctx.respond("최대한 빠른 시일 내에 버그를 수정하도록 하겠습니다! / 버그를 제보해주셔서 감사합니다!", ephemeral=True)
+    except discord.HTTPException:
+        await ctx.respond("버그를 제보하는중 오류가 발생했어요...", kek=True)# 웹훅 URL 설정
+
+async def send_error_to_webhook(error_message):
+    async with aiohttp.ClientSession() as session:
+        webhook_data = {
+            "content": f"**Error**:\ns{error_message}"
+        }
+        async with session.post(WEBHOOK_URL, json=webhook_data) as response:
+            if response.status != 204:
+                print(f"Failed to send webhook. Status code: {response.status}")
+                
+@bot.event
+async def on_presence_update(before, after):
+    if before.status != after.status:
+        if after.status == discord.Status.online:
+            online_records[after.id] = {'start': int(time.time()), 'end': None}
+        elif after.status == discord.Status.offline and after.id in online_records:
+            online_records[after.id]['end'] = int(time.time())
+
+@bot.slash_command(name="온라인기록", description="사용자의 온라인 기록을 확인합니다.")
+async def check_online_record(ctx):
+    user_id = ctx.author.id
+    if user_id in online_records:
+        start = online_records[user_id]['start']
+        end = online_records[user_id]['end']
+        
+        embed = discord.Embed(title="온라인 기록", color=discord.Color.blue())
+        embed.add_field(name="시작", value=f"<t:{start}:F>", inline=True)
+        
+        if end:
+            embed.add_field(name="오프라인 시간", value=f"<t:{end}:F>", inline=True)
+            embed.add_field(name="오프라인 지속 시간", value=f"<t:{end}:R>", inline=True)
+        else:
+            current_time = int(time.time())
+            embed.add_field(name="현재 상태", value="온라인", inline=False)
+            embed.add_field(name="현재 온라인 지속 시간", value=f"<t:{start}:R>", inline=True)
+        
+        await ctx.respond(embed=embed)
+    else:
+        await ctx.respond("온라인 기록이 없습니다.")
+
+@bot.slash_command(name="채널설정", description="입장 로그를 받을 채널을 설정해요!")
+async def set_channel(ctx: discord.ApplicationContext, channel: discord.TextChannel):
+    settings['notification_channel_id'] = channel.id
+    settings['notification_enabled'] = True  # 채널 설정 후 알림 활성화
+    save_settings(settings)  # 설정을 파일에 저장
+    await ctx.respond(f"입장 로그를 {channel.mention} 채널로 설정했어요!")
+
+@bot.slash_command(name="입장로그", description="최근 입장 로그를 확인해요!")
+async def show_join_logs(ctx: discord.ApplicationContext):
+    if not join_logs:
+        await ctx.respond("현재 입장 로그가 없어요!")
+        return
+
+    embed = discord.Embed(
+        title="최근 입장 로그",
+        description="최근 유저가 입장한 로그에요!",
+        color=discord.Color.blue()
+    )
+    
+    for log in join_logs:
+        embed.add_field(name=log['timestamp'], value=log['message'], inline=False)
+
+    await ctx.respond(embed=embed)
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    # 설정된 채널이 있는 서버인지 확인
+    if settings['notification_channel_id'] and settings['notification_enabled']:
+        channel = bot.get_channel(settings['notification_channel_id'])
+        
+        if channel and channel.guild == member.guild:
+            # 현재 시간을 유닉스 타임스탬프로 변환
+            unix_timestamp = int(discord.utils.utcnow().timestamp())
+            
+            member_count = len(member.guild.members)
+
+            # 아바타 URL 확인 및 기본 이미지 설정
+            avatar_url = member.display_avatar.url if member.display_avatar else 'https://cdn.discordapp.com/embed/avatars/0.png'
+
+            embed = discord.Embed(
+                title="{member_count}번째 유저가 입장했어요!",
+                description=f"{member.display_name}님이 {member.guild.name} 서버에 입장하셨어요!",
+                color=discord.Color.green()
+            )
+            embed.add_field(name="유저", value=member.display_name, inline=True)
+            embed.add_field(name="유저 ID", value=member.id, inline=True)
+            embed.add_field(name="서버에 입장한 시간", value=f"<t:{unix_timestamp}:F>", inline=True)  # 포맷 옵션: 'F' (전체 날짜)
+            embed.set_thumbnail(url=avatar_url)
+
+            await channel.send(embed=embed)
+
+            # 입장 로그를 기록합니다.
+            timestamp = int(discord.utils.utcnow().timestamp())
+            join_logs.append({
+                'timestamp': f"<t:{timestamp}:F>",
+                'message': (
+                    f"**유저 이름**: {member.display_name}\n"
+                    f"**유저 ID**: {member.id}\n"
+                    f"**입장 시간**: <t:{timestamp}:F>"
+                )
+            })
+
+            # 입장 로그가 너무 많아지지 않도록, 예를 들어 최근 10개의 로그만 보관합니다.
+            if len(join_logs) > 10:
+                join_logs.pop(0)
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    error = traceback.format_exc()
+    await send_error_to_webhook(error)
+    
 bot.load_extension('jejudo')
 bot.run(TOKEN)
