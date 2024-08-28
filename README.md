@@ -1,12 +1,12 @@
 ## 설치 방법
 
-1. 저장소를 클론하기:
+1. 레포지토리 클론:
     ```sh
-    git clone https://github.com/pokelochi/mingjeong.git
+    git clone https://github.com/hannibotdev/hannibot.git
     ```
 2. 프로젝트 디렉토리로 이동:
     ```sh
-    cd winterbot
+    cd hannibot
     ```
 3. 가상 환경을 생성하고 활성화:
     ```sh
