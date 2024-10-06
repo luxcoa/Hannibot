@@ -63,6 +63,16 @@
   4. 포크한 레포지토리에 푸시: `git push origin feature/YourFeature`
   5. Pull Request (PR)을 생성하여 변경 사항을 제안해주세요!
 
+### 📊 Repository Stats:
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/luxcoa/hannibot?style=social" alt="Stars" />
+  <img src="https://img.shields.io/github/forks/luxcoa/hannibot" alt="Forks" />
+  <img src="https://img.shields.io/github/issues/luxcoa/hannibot" alt="Open Issues" />
+  <img src="https://img.shields.io/github/contributors/luxcoa/hannibot" alt="Contributors" />
+  <img src="https://img.shields.io/github/last-commit/luxcoa/hannibot" alt="Last Commit" />
+</p>
+
 ## 연락처
 
 - 문제가 발생하거나 궁금한 점이 있으시면, 아래의 이메일로 문의해 주세요.:
