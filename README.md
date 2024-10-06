@@ -1,7 +1,7 @@
 ## 설치 방법
 
 1. **레포지토리 다운로드**:
-    - [여기](https://github.com/luxcoa/hannibot/tree/main/Hannibot)에서 프로젝트 파일을 다운로드합니다.
+    - [여기](https://github.com/luxcoa/hannibot)에서 프로젝트 파일을 다운로드합니다.
     - `Code` 버튼을 클릭하고 `Download ZIP`을 선택하여 ZIP 파일로 다운로드하거나, 직접 파일을 복사할 수 있습니다.
 
 2. **프로젝트 디렉토리로 이동**:
