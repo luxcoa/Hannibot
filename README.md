@@ -38,7 +38,7 @@
 - 소스 코드를 수정하여 배포하는 경우, 동일한 라이선스 조건에 따라 배포해야 합니다.
 - 이 소스코드의 오용으로 인해 발생하는 문제나 손해에 대해 저작자는 법적 책임과 지지 않습니다.
 
-자세한 내용은 [LICENSE](https://github.com/pokelochi/minjeongbot/blob/main/LICENSE) 파일을 참조해 주세요. 이 라이선스 조건을 이해하고 준수하는 것은 사용자 본인의 책임입니다.
+자세한 내용은 [LICENSE](https://github.com/luxcoa/Hannibot/blob/main/LICENSE) 파일을 참조해 주세요. 이 라이선스 조건을 이해하고 준수하는 것은 사용자 본인의 책임입니다.
 
 ## 기여 방법
 
