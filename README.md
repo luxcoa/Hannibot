@@ -2,7 +2,7 @@
 
 1. **레포지토리 클론**:
     ```sh
-    git clone https://github.com/hannibotdev/hannibot.git
+    git clone https://github.com/luxcoa/hannibot.git
     ```
     - 이 명령어를 사용하여 레포지토리를 로컬 환경으로 클론합니다. 클론이 완료되면, `hannibot`이라는 새 디렉토리가 생성됩니다.
 
