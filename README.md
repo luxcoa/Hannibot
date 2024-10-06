@@ -2,7 +2,6 @@
 
 1. **레포지토리 다운로드**:
     - [여기](https://github.com/luxcoa/hannibot/tree/main/Hannibot)에서 프로젝트 파일을 다운로드합니다.
-      ![Download ZIP](https://img.icons8.com/ios-filled/50/000000/download-2.png) <!-- 다운로드 아이콘 추가 -->
     - `Code` 버튼을 클릭하고 `Download ZIP`을 선택하여 ZIP 파일로 다운로드하거나, 직접 파일을 복사할 수 있습니다.
 
 2. **프로젝트 디렉토리로 이동**:
@@ -10,27 +9,25 @@
     cd Hannibot
     ```
     - 다운로드한 `Hannibot` 디렉토리로 이동하여 프로젝트 파일에 접근합니다.
-      ![Command Line](https://img.icons8.com/ios-filled/50/000000/command-line.png) <!-- 명령어 아이콘 추가 -->
 
 3. **종속성 설치**:
     ```sh
     pip install -r requirements.txt
     ```
     - 프로젝트에 필요한 모든 패키지를 설치합니다. `requirements.txt` 파일에는 필요한 라이브러리 목록이 포함되어 있습니다.
-      ![Requirements](https://img.icons8.com/ios-filled/50/000000/requirements.png) <!-- 요구 사항 아이콘 추가 -->
 
 4. **토큰으로 봇 설정**:
+    - 코드 내 봇 설정을 모두 완료하신 후 진행해주세요. (Json,유저id 설정 등)
     - `코드 내 30번째 줄`에서 `'Token'` 부분에 자신의 봇 토큰을 입력합니다. 
     - **토큰 보안 주의**: 자신의 토큰을 안전하게 보관하고 외부에 노출되지 않도록 주의하세요.
 
-5. **봇 실행**:
+6. **봇 실행**:
     - Windows + R 키를 눌러 실행 창을 열고 `cmd`를 입력하여 명령 프롬프트를 실행합니다. 
     - 아래 명령어를 입력하여 봇을 실행합니다:
     ```
     python (파일이름).py
     ```
     - `(파일이름)`은 실제 Python 파일의 이름으로 대체해야 합니다. 예를 들어, `bot.py`라면 `python bot.py`로 입력합니다.
-      ![Run Command](https://img.icons8.com/ios-filled/50/000000/play.png) <!-- 실행 아이콘 추가 -->
 
 ## 라이선스
 
@@ -60,7 +57,7 @@
   <img src="https://img.shields.io/github/last-commit/luxcoa/hannibot" alt="Last Commit" />
 </p>
 
-## 연락처
+## 문의
 
-- 문제가 발생하거나 궁금한 점이 있으시면, 아래의 이메일로 문의해 주세요.:
+- 문제가 발생하거나 궁금한 점이 **있을 경우**에만 문의해주세요:
   - hannifam@proton.me
