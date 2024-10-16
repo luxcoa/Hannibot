@@ -37,7 +37,7 @@ with open('config.json', 'r') as file:
 KOREANBOTS_AUTH = config['KOREANBOTS_AUTH']
 CHANNEL_ID = config['CHANNEL_ID']
 DEVELOPER_IDS = 837570564536270848 # 개발자 유저 ID
-WEBHOOK_URL = 'https://discord.com/api/webhooks/1270055501446512702/OopILVLeY052NlSTypBHpP6gcgynEVczjuDkwGC9a210pBvxhcyyqqf66ZAogtCUA2TK'
+WEBHOOK_URL = '에러로그 웹훅링크크'
 
 # 로그 기록을 저장할 리스트
 join_logs = []
@@ -82,7 +82,7 @@ async def on_command_error(ctx, error):
     except Exception as e:
         print(f"오류 메시지 전송 중 오류 발생: {e}")
     
-bot_owner_id = 837570564536270848
+bot_owner_id = 개발자 ID
 
 class Timer:
     def __init__(self, ctx, duration):
