@@ -18,8 +18,8 @@ intents.guilds = True
 intents.members = True
 
 
-# 샤드 수를 지정합니다.
-shard_count = 1 # 샤드 수를 원하는 만큼 설정합니다.
+# 샤드 수를 지정
+shard_count = 1 # 샤드 수를 원하는 만큼 설정
 bot = commands.AutoShardedBot(command_prefix=commands.when_mentioned_or("."),  owner_ids=[837570564536270848], intents=intents, shard_count=shard_count)
 timers = {}  # 각 서버별 타이머를 저장할 딕셔너리
 online_records = {}
@@ -37,7 +37,7 @@ with open('config.json', 'r') as file:
 KOREANBOTS_AUTH = config['KOREANBOTS_AUTH']
 CHANNEL_ID = config['CHANNEL_ID']
 DEVELOPER_IDS = 837570564536270848 # 개발자 유저 ID
-WEBHOOK_URL = '에러로그 웹훅링크크'
+WEBHOOK_URL = '에러로그 웹훅링크'
 
 # 로그 기록을 저장할 리스트
 join_logs = []
@@ -96,7 +96,7 @@ target_guild_ids = [1081161469195980831, 987654321098765432]  # 자동으로 나
 warnings = {}
 
 
-# 마지막 사용 시간을 저장할 딕셔너리 (유저 ID와 명령어를 키로 사용)
+# 마지막 사용 시간을 저장할 딕셔너리
 last_used = {}
 # 파일 경로 설정
 SETTINGS_FILE = 'settings.json'    
@@ -151,9 +151,6 @@ newjeans_songs = [
     "Get Up", "Zero", "How Sweet", "Bubble Gum", "아름다운 구속", "우리의 밤은 당신의 낮보다 아름답다", "GODS", "Ditto 250 Remix", 
     "OMG – FRNK Remix", "Attention 250 Remix", "Hype Boy 250 Remix", "Cookie FRNK Remix", "Hurt 250 Remix", "Right Now", "Supernatural"
 ]
-
-INVITE_LINK = 'https://discord.gg/UfHSqhcj2j'
-SPECIFIC_USER_IDS = ['837570564536270848', '3231313312']
 
 DEVELOPER_ID = '837570564536270848'
 BOT_VERSION = '2.0.0'
@@ -782,7 +779,7 @@ async def 데뷔일 (ctx):
         embed.add_field(name="", value="**2022년 7월 22일에  EP 1집 New Jeans로 데뷔했어요!**", inline=True)
         await ctx.respond(embed=embed)
 
-# 상태 인텐트 관련 이슈로 삭제
+# 인텐트 관련 이슈로 삭제
 # @bot.slash_command(description="멘션한 유저의 현재 활동 상태 정보를 전송해요!")
 # @discord.option(name='유저', type=discord.Member, description='유저를 멘션해주세요!')
 # async def 상태(ctx, 유저: discord.Member = None):
