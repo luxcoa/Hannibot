@@ -92,30 +92,6 @@ python bot.py
 ```
 자세한 명령어 목록과 사용법은 [공식 사이트](https://hannibot.netlify.app/features)를 참조해주세요.
 ---
-# Linux/macOS
-python3 -m venv venv
-source venv/bin/activate
-```
-
-3. **의존성 패키지 설치**
-```bash
-pip install -r requirements.txt
-```
-
-4. **환경 설정**
-```bash
-# config.json 파일 생성
-{
-    "token": "YOUR_BOT_TOKEN",
-    "prefix": "!",
-    "owner_id": "YOUR_DISCORD_ID"
-}
-```
-
-5. **봇 실행**
-```bash
-python (파일이름).py
-```
 
 ### 빠른 설치 (Windows)
 
