@@ -4,7 +4,6 @@
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python Version">
-    <img src="https://img.shields.io/badge/Py-cord-Latest-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord.py Version">
     <img src="https://img.shields.io/badge/License-GPL_2.0-blue?style=flat-square" alt="License">
   </p>
 
