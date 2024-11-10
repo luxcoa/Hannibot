@@ -3,8 +3,8 @@
 <div align="center">
 
   <p>
-    <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python Version">
-    <img src="https://img.shields.io/badge/Discord.py-Latest-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord.py Version">
+    <img src="https://img.shields.io/badge/Python-3.9+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python Version">
+    <img src="https://img.shields.io/badge/Py-cord-Latest-5865F2?style=flat-square&logo=discord&logoColor=white" alt="Discord.py Version">
     <img src="https://img.shields.io/badge/License-GPL_2.0-blue?style=flat-square" alt="License">
   </p>
 
@@ -16,27 +16,27 @@
     <img src="https://img.shields.io/github/last-commit/luxcoa/hannibot" alt="Last Commit">
   </p>
 
-  <p>NewJeans 정보 제공 및 다양한 서버 관리 기능을 제공하는 다목적 Discord 봇</p>
+  <p>뉴진스의 관련된 정보 제공 및 다양한 서버 관리 기능을 제공하는 다목적 Discord 봇</p>
 </div>
 
 ## ✨ 주요 기능
 
-- 🎵 **NewJeans 정보**
+- 🎵 **정보 기능**
   - 최신 뉴스 및 업데이트
   - 멤버 프로필 및 정보
   - 음악 및 앨범 정보
 
-- 🎲 **게임 시스템**
+- 🎲 **도박 시스템**
   - 슬롯머신
   - 주사위 게임
-  - 기타 미니게임
+  - 기타 도박 시스템
 
 - 🛠 **서버 관리**
   - 멤버 관리
   - 채널 설정
   - 자동화 기능
 
-## 🚀 시작하기
+## 🚀 | 시작하기
 
 ### 전제 조건
 
@@ -65,24 +65,14 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 
-3. **의존성 패키지 설치**
+3. **필요한 패키지 설치**
 ```bash
 pip install -r requirements.txt
 ```
 
-4. **환경 설정**
+4. **봇 실행**
 ```bash
-# config.json 파일 생성
-{
-    "token": "YOUR_BOT_TOKEN",
-    "prefix": "!",
-    "owner_id": "YOUR_DISCORD_ID"
-}
-```
-
-5. **봇 실행**
-```bash
-python bot.py
+python (파일이름).py
 ```
 
 ### 빠른 설치 (Windows)
@@ -101,18 +91,8 @@ pip install -r requirements.txt
 ```bash
 python bot.py
 ```
-
-## 📚 사용 방법
-
-```plaintext
-!help - 모든 명령어 목록 표시
-!news - NewJeans 최신 소식
-!profile [멤버] - 멤버 프로필 조회
-!play [게임] - 미니게임 시작
-```
-
-자세한 명령어 목록과 사용법은 [공식 사이트](https://github.com/luxcoa/hannibot/wiki)를 참조해주\venv\Scripts\activate
-
+자세한 명령어 목록과 사용법은 [공식 사이트](https://hannibot.netlify.app/features)를 참조해주세요.
+---
 # Linux/macOS
 python3 -m venv venv
 source venv/bin/activate
@@ -135,7 +115,7 @@ pip install -r requirements.txt
 
 5. **봇 실행**
 ```bash
-python bot.py
+python (파일이름).py
 ```
 
 ### 빠른 설치 (Windows)
@@ -166,7 +146,7 @@ python (파일이름).py
 - ✅ 수정된 버전 배포 시 동일 라이선스 적용
 - ⚠️ 모든 복제본에 원저작자 정보 포함 필수
 - ⚠️ 봇 리스트 사이트 등록 시 출처 명시 필수
-- ⚠️ 소스코드 오용으로 인한 문제는 책임지지 않음
+- ⚠️ 소스코드 오용으로 인한 문제는 저자가 책임지지 않음
 
 ## ❓ 지원 및 문의
 
