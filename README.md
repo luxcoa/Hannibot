@@ -153,7 +153,7 @@ python (파일이름).py
 - **이메일 문의**: hannifam@proton.me
 - **디스코드**: [서포트 서버 참여](https://discord.gg/8xZtuQ5rsr)
 
-> ⚠️ 문의하기 전에 [자주 묻는 질문](https://github.com/luxcoa/Hannibot/blob/main/faq)을 먼저 확인해주세요.
+> ⚠️ 문의하기 전에 [자주 묻는 질문](https://github.com/luxcoa/Hannibot/blob/main/md/faq.md)을 먼저 확인해주세요.
 
 ## 🌟 기여자
 
