@@ -93,25 +93,6 @@ python bot.py
 자세한 명령어 목록과 사용법은 [공식 사이트](https://hannibot.netlify.app/features)를 참조해주세요.
 ---
 
-### 빠른 설치 (Windows)
-
-1. `Code` 버튼을 클릭하고 `Download ZIP`으로 다운로드
-2. 다운로드 폴더로 이동:
-```bash
-cd %USERPROFILE%\Downloads\hannibot-main
-```
-3. 필요한 패키지 설치:
-```bash
-pip install -r requirements.txt
-```
-4. 봇 메인 파일에서 봇 토큰 설정
-5. 봇 실행:
-```bash
-python (파일이름).py
-```
-
-자세한 명령어 목록과 가이드는 [공식 사이트](https://hannibot.netlify.app/features)를 참조해주세요.
-
 ## 📄 라이선스
 
 이 레포지토리는 [GNU General Public License v2.0](LICENSE) 라이선스에 따라 배포됩니다.
