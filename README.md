@@ -1,7 +1,6 @@
 # 🤖 HanniBot
 
 <div align="center">
-  <img src="https://komarev.com/ghpvc/?username=hannibot&color=brightgreen" alt="Profile views">
 
   <p>
     <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python Version">
